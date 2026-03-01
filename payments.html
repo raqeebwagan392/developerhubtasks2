@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nexus — Payments</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07080c;--s1:#0d1018;--s2:#131720;--s3:#1a2030;
+  --border:rgba(255,255,255,0.06);--b2:rgba(255,255,255,0.11);
+  --text:#e8eaf2;--muted:#5a6280;--muted2:#8892b0;
+  --green:#00e5a0;--red:#ff3d5a;--blue:#3d7eff;--gold:#ffc84a;
+  --fh:'Space Grotesk',sans-serif;--fm:'Space Mono',monospace;
+  --r:10px;--r2:16px;
+}
+html{font-size:16px}
+body{font-family:var(--fh);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* scanline texture */
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;z-index:0}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:56px;background:var(--s1);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.brand{font-family:var(--fm);font-size:14px;font-weight:700;letter-spacing:3px;color:var(--green)}
+.nav{display:flex;gap:2px}
+.nav-btn{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;font-family:var(--fh);color:var(--muted);background:none;border:none;cursor:pointer;transition:all .15s;letter-spacing:.3px}
+.nav-btn:hover{color:var(--text);background:var(--s3)}
+.nav-btn.active{color:var(--green);background:rgba(0,229,160,.08)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.tb-av{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--blue),var(--green));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.tb-info{line-height:1}
+.tb-name{font-size:13px;font-weight:600}
+.tb-role{font-size:10px;color:var(--muted);font-family:var(--fm)}
+
+/* LAYOUT */
+.page{display:grid;grid-template-columns:1fr 340px;gap:20px;padding:24px 28px;max-width:1300px;margin:0 auto;position:relative;z-index:1}
+
+/* WALLET HERO */
+.wallet-hero{grid-column:1/-1;background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);padding:32px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px}
+.wallet-hero::before{content:'';position:absolute;top:-60px;right:-60px;width:280px;height:280px;background:radial-gradient(circle,rgba(0,229,160,.07) 0%,transparent 70%);pointer-events:none}
+.wallet-hero::after{content:'';position:absolute;bottom:-40px;left:200px;width:200px;height:200px;background:radial-gradient(circle,rgba(61,126,255,.05) 0%,transparent 70%);pointer-events:none}
+.wallet-left{}
+.wallet-label{font-family:var(--fm);font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+.wallet-balance{font-family:var(--fm);font-size:52px;font-weight:700;letter-spacing:-2px;line-height:1;margin-bottom:6px}
+.wallet-balance .currency{font-size:24px;color:var(--muted2);margin-right:4px}
+.wallet-balance .cents{font-size:28px;color:var(--muted2)}
+.wallet-change{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--green)}
+.wallet-change .arrow{font-size:16px}
+.wallet-change .pct{font-family:var(--fm);font-weight:700}
+.wallet-change .period{color:var(--muted);font-size:12px}
+.wallet-right{display:flex;gap:10px;flex-wrap:wrap}
+.action-btn{display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r2);padding:16px 22px;cursor:pointer;transition:all .2s;font-family:var(--fh);min-width:90px}
+.action-btn:hover{border-color:var(--green);background:rgba(0,229,160,.07);transform:translateY(-2px)}
+.action-btn .ab-icon{font-size:22px}
+.action-btn .ab-label{font-size:11px;font-weight:600;color:var(--muted2);letter-spacing:.3px}
+
+/* SEND MONEY CARD */
+.send-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);padding:24px}
+.card-title{font-size:14px;font-weight:700;letter-spacing:.5px;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+.card-title .ct-dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+
+.field-lbl{font-family:var(--fm);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:block}
+.inp{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r);padding:12px 14px;color:var(--text);font-family:var(--fh);font-size:14px;outline:none;transition:border-color .15s;margin-bottom:14px}
+.inp:focus{border-color:var(--green)}
+.inp::placeholder{color:var(--muted)}
+.amount-inp-wrap{position:relative;margin-bottom:14px}
+.amount-inp-wrap .currency-pre{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-family:var(--fm);font-size:16px;color:var(--muted2)}
+.amount-inp{padding-left:36px}
+.send-btn{width:100%;background:var(--green);color:#000;font-family:var(--fh);font-size:14px;font-weight:700;border:none;border-radius:var(--r);padding:14px;cursor:pointer;transition:all .2s;letter-spacing:.3px}
+.send-btn:hover{background:#00c988;transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,229,160,.25)}
+
+.recipient-preview{display:flex;align-items:center;gap:10px;background:var(--s3);border-radius:var(--r);padding:10px 14px;margin-bottom:14px}
+.rp-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.rp-name{font-size:13px;font-weight:600}
+.rp-role{font-size:11px;color:var(--muted)}
+
+/* TRANSACTION HISTORY */
+.tx-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);padding:24px}
+.tx-filters{display:flex;gap:6px;margin-bottom:18px}
+.tx-filter{padding:5px 14px;border-radius:20px;font-size:11px;font-weight:600;font-family:var(--fh);border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;transition:all .15s;letter-spacing:.3px}
+.tx-filter:hover{border-color:var(--b2);color:var(--text)}
+.tx-filter.active{background:rgba(0,229,160,.1);border-color:rgba(0,229,160,.3);color:var(--green)}
+
+.tx-list{display:flex;flex-direction:column;gap:2px}
+.tx-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r);transition:background .15s;cursor:pointer}
+.tx-row:hover{background:var(--s2)}
+.tx-icon-wrap{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.tx-icon-wrap.in {background:rgba(0,229,160,.1)}
+.tx-icon-wrap.out{background:rgba(255,61,90,.1)}
+.tx-icon-wrap.pending{background:rgba(255,200,74,.1)}
+.tx-body{flex:1;min-width:0}
+.tx-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-meta{font-size:11px;color:var(--muted);margin-top:2px;font-family:var(--fm)}
+.tx-amount{font-family:var(--fm);font-size:14px;font-weight:700;text-align:right;flex-shrink:0}
+.tx-amount.in{color:var(--green)}
+.tx-amount.out{color:var(--red)}
+.tx-amount.pending{color:var(--gold)}
+.tx-status{font-size:9px;font-weight:700;letter-spacing:1px;text-align:right;margin-top:2px}
+.tx-status.in{color:var(--green)}
+.tx-status.out{color:var(--muted)}
+.tx-status.pending{color:var(--gold)}
+
+/* divider */
+.tx-divider{padding:8px 14px 4px;font-family:var(--fm);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+
+/* STATS SIDEBAR */
+.stats-stack{display:flex;flex-direction:column;gap:14px;grid-row:2}
+
+.mini-stat{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);padding:20px 22px;position:relative;overflow:hidden}
+.mini-stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:2px 2px 0 0}
+.mini-stat.g::before{background:var(--green)}
+.mini-stat.r::before{background:var(--red)}
+.mini-stat.b::before{background:var(--blue)}
+.ms-label{font-family:var(--fm);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.ms-val{font-family:var(--fm);font-size:28px;font-weight:700;letter-spacing:-1px}
+.ms-val.g{color:var(--green)}
+.ms-val.r{color:var(--red)}
+.ms-val.b{color:var(--blue)}
+.ms-sub{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* mini bar chart */
+.mini-chart{display:flex;align-items:flex-end;gap:4px;height:40px;margin-top:12px}
+.mc-bar{flex:1;border-radius:3px 3px 0 0;transition:height .3s;cursor:pointer;opacity:.5}
+.mc-bar.active{opacity:1}
+.mc-bar.g{background:var(--green)}
+.mc-bar.b{background:var(--blue)}
+
+/* fund deal card */
+.fund-card{background:linear-gradient(135deg,rgba(61,126,255,.1),rgba(0,229,160,.08));border:1px solid rgba(61,126,255,.2);border-radius:var(--r2);padding:22px}
+.fund-title{font-size:14px;font-weight:700;margin-bottom:4px}
+.fund-sub{font-size:12px;color:var(--muted);margin-bottom:16px}
+.fund-flow{display:flex;align-items:center;gap:8px;margin-bottom:16px;background:var(--s1);border-radius:var(--r);padding:12px 14px}
+.ff-party{text-align:center;flex:1}
+.ff-name{font-size:12px;font-weight:600}
+.ff-role{font-size:10px;color:var(--muted);margin-top:2px}
+.ff-arrow{font-size:20px;color:var(--blue)}
+.fund-amount-row{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.fund-inp{flex:1;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r);padding:10px 12px;color:var(--text);font-family:var(--fm);font-size:14px;font-weight:700;outline:none;transition:border-color .15s}
+.fund-inp:focus{border-color:var(--blue)}
+.fund-btn{background:var(--blue);color:#fff;border:none;border-radius:var(--r);padding:10px 16px;font-family:var(--fh);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap}
+.fund-btn:hover{background:#2a68f0;box-shadow:0 4px 16px rgba(61,126,255,.3)}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:200;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--s1);border:1px solid var(--b2);border-radius:20px;padding:32px;width:420px;max-width:95vw;animation:pop .22s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+.modal-title{font-size:20px;font-weight:700}
+.modal-x{background:var(--s2);border:1px solid var(--border);color:var(--muted);width:30px;height:30px;border-radius:8px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.modal-x:hover{color:var(--text)}
+
+.success-modal{text-align:center;padding:8px 0}
+.sm-icon{font-size:56px;margin-bottom:16px}
+.sm-title{font-size:22px;font-weight:700;margin-bottom:6px}
+.sm-sub{color:var(--muted);font-size:13px;margin-bottom:24px}
+.sm-ref{font-family:var(--fm);font-size:11px;color:var(--muted);background:var(--s2);border-radius:8px;padding:8px 16px;margin-bottom:22px;letter-spacing:1px}
+.modal-btn{width:100%;background:var(--green);color:#000;font-family:var(--fh);font-size:14px;font-weight:700;border:none;border-radius:var(--r);padding:13px;cursor:pointer;transition:all .2s}
+.modal-btn:hover{background:#00c988}
+
+/* TOAST */
+.toasts{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--s2);border:1px solid var(--b2);border-radius:10px;padding:11px 16px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:8px;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:slide-in .3s ease;max-width:280px}
+@keyframes slide-in{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.toast.s{border-left:3px solid var(--green)}
+.toast.e{border-left:3px solid var(--red)}
+.toast.i{border-left:3px solid var(--blue)}
+
+/* RESPONSIVE */
+@media(max-width:900px){.page{grid-template-columns:1fr}.stats-stack{display:grid;grid-template-columns:repeat(2,1fr);grid-row:auto}}
+@media(max-width:600px){.page{padding:16px}.wallet-balance{font-size:36px}.wallet-right{width:100%}.action-btn{flex:1}.nav{display:none}}
+</style>
+
+<style id="nx-nav-style">
+/* NEXUS SHARED TOPNAV */
+.nx-topnav{
+  position:fixed;top:0;left:0;right:0;z-index:9999;
+  background:#0a0c12;
+  border-bottom:1px solid rgba(255,255,255,0.07);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;height:52px;
+  font-family:'DM Sans','Outfit',sans-serif;
+}
+.nx-brand{
+  font-size:15px;font-weight:800;letter-spacing:3px;
+  color:#00e5a0;cursor:pointer;flex-shrink:0;
+}
+.nx-links{display:flex;gap:2px;}
+.nx-link{
+  display:flex;align-items:center;gap:5px;
+  padding:6px 12px;border-radius:8px;
+  font-size:12px;font-weight:500;
+  text-decoration:none;color:rgba(255,255,255,0.45);
+  transition:all .15s;white-space:nowrap;
+}
+.nx-link:hover{color:#fff;background:rgba(255,255,255,0.07);}
+.nx-link.active{color:#00e5a0;background:rgba(0,229,160,0.1);}
+.nx-ham{
+  display:none;background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.1);border-radius:7px;
+  color:#fff;font-size:16px;padding:5px 9px;cursor:pointer;
+}
+/* Push page content down */
+body > *:not(.nx-topnav){margin-top:0}
+.main,.page,.lobby-body,.hero,.topbar,.topnav,.shell,.page-wrapper{
+  padding-top:0 !important;
+}
+/* Hide original navbars once we inject ours */
+.sidebar,.topbar,.topnav,.header,.call-header+.video-stage,.topbar+*{
+  /* don't hide — just override top offset */
+}
+@media(max-width:700px){
+  .nx-links{
+    display:none;flex-direction:column;
+    position:fixed;top:52px;left:0;right:0;
+    background:#0a0c12;border-bottom:1px solid rgba(255,255,255,0.1);
+    padding:8px 0;z-index:9998;
+  }
+  .nx-links.open{display:flex;}
+  .nx-link{padding:10px 20px;border-radius:0;font-size:13px;}
+  .nx-ham{display:block;}
+}
+</style>
+
+<style id="nx-body-offset">
+  /* Offset page body below fixed topnav (52px) */
+  body { padding-top: 52px !important; }
+  /* Calendar has its own sidebar layout — fix its main content */
+  .main { padding-top: 0 !important; }
+  /* video call screen takes full height - handle it */
+  #callScreen { padding-top: 0 !important; }
+  #lobby { padding-top: 0 !important; }
+</style>
+</head>
+<body>
+<nav class="nx-topnav" id="nxTopnav">
+  <div class="nx-brand" onclick="location.href='dashboard.html'">NEXUS</div>
+  <div class="nx-links" id="nxLinks">
+    <a class="nx-link" href="dashboard.html">⊞ Dashboard</a>
+    <a class="nx-link" href="calendar.html">📅 Calendar</a>
+    <a class="nx-link" href="video-call.html">🎥 Video</a>
+    <a class="nx-link" href="documents.html">📁 Docs</a>
+    <a class="nx-link active" href="payments.html">💳 Payments</a>
+    <a class="nx-link" href="security.html">🔐 Security</a>
+  </div>
+  <button class="nx-ham" id="nxHam" onclick="document.getElementById('nxLinks').classList.toggle('open')">☰</button>
+</nav>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">NEXUS_PAY</div>
+  <div class="nav">
+    <button class="nav-btn" onclick="location.href='dashboard.html'">Dashboard</button>
+    <button class="nav-btn" onclick="location.href='video-call.html'">Calls</button>
+    <button class="nav-btn" onclick="location.href='documents.html'">Docs</button>
+    <button class="nav-btn active">Payments</button>
+    <button class="nav-btn" onclick="location.href='security.html'">Security</button>
+  </div>
+  <div class="topbar-right">
+    <div class="tb-av">A</div>
+    <div class="tb-info">
+      <div class="tb-name">Abdul Raqeeb</div>
+      <div class="tb-role">ENTREPRENEUR</div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE GRID -->
+<div class="page">
+
+  <!-- WALLET HERO (full width) -->
+  <div class="wallet-hero">
+    <div class="wallet-left">
+      <div class="wallet-label">Total Wallet Balance</div>
+      <div class="wallet-balance"><span class="currency">$</span><span id="balanceInt">48,250</span><span class="cents">.00</span></div>
+      <div class="wallet-change">
+        <span class="arrow">↑</span>
+        <span class="pct">+12.4%</span>
+        <span class="period">vs last month</span>
+      </div>
+    </div>
+    <div class="wallet-right">
+      <div class="action-btn" onclick="openModal('deposit')"><div class="ab-icon">⬇</div><div class="ab-label">Deposit</div></div>
+      <div class="action-btn" onclick="openModal('withdraw')"><div class="ab-icon">⬆</div><div class="ab-label">Withdraw</div></div>
+      <div class="action-btn" onclick="openModal('transfer')"><div class="ab-icon">↔</div><div class="ab-label">Transfer</div></div>
+      <div class="action-btn" onclick="scrollTo(0,600)"><div class="ab-icon">📊</div><div class="ab-label">Analytics</div></div>
+    </div>
+  </div>
+
+  <!-- LEFT: TRANSACTIONS + SEND FORM -->
+  <div style="display:flex;flex-direction:column;gap:16px">
+
+    <!-- SEND MONEY -->
+    <div class="send-card">
+      <div class="card-title"><div class="ct-dot"></div> Send Money</div>
+
+      <label class="field-lbl">Recipient</label>
+      <select class="inp" id="recipientSel" onchange="updateRecipient()">
+        <option value="">— Select Recipient —</option>
+        <option value="Sarah Chen|Investor">Sarah Chen — Investor</option>
+        <option value="Marcus Webb|Entrepreneur">Marcus Webb — Entrepreneur</option>
+        <option value="Jennifer Park|VC Fund">Jennifer Park — VC Fund</option>
+        <option value="David Kim|Investor">David Kim — Investor</option>
+      </select>
+
+      <div class="recipient-preview" id="recipientPreview" style="display:none">
+        <div class="rp-av" id="rpAv" style="background:linear-gradient(135deg,#00e5a0,#3d7eff)">SC</div>
+        <div><div class="rp-name" id="rpName">Sarah Chen</div><div class="rp-role" id="rpRole">Investor</div></div>
+      </div>
+
+      <label class="field-lbl">Amount (USD)</label>
+      <div class="amount-inp-wrap">
+        <span class="currency-pre">$</span>
+        <input class="inp amount-inp" type="number" id="sendAmount" placeholder="0.00" min="1" />
+      </div>
+
+      <label class="field-lbl">Note (optional)</label>
+      <input class="inp" type="text" id="sendNote" placeholder="e.g. Series A payment…" />
+
+      <button class="send-btn" onclick="sendMoney()">Send Payment →</button>
+    </div>
+
+    <!-- TRANSACTIONS -->
+    <div class="tx-card">
+      <div class="card-title" style="justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:8px"><div class="ct-dot"></div> Transaction History</div>
+        <span style="font-family:var(--fm);font-size:10px;color:var(--muted)" id="txCount">— entries</span>
+      </div>
+      <div class="tx-filters">
+        <button class="tx-filter active" onclick="setTxFilter('all',this)">All</button>
+        <button class="tx-filter" onclick="setTxFilter('in',this)">Received</button>
+        <button class="tx-filter" onclick="setTxFilter('out',this)">Sent</button>
+        <button class="tx-filter" onclick="setTxFilter('pending',this)">Pending</button>
+      </div>
+      <div class="tx-list" id="txList"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT SIDEBAR: STATS + FUND DEAL -->
+  <div class="stats-stack">
+    <div class="mini-stat g">
+      <div class="ms-label">Total Received</div>
+      <div class="ms-val g" id="totalIn">$0</div>
+      <div class="ms-sub">This month</div>
+      <div class="mini-chart" id="chartIn"></div>
+    </div>
+    <div class="mini-stat r">
+      <div class="ms-label">Total Sent</div>
+      <div class="ms-val r" id="totalOut">$0</div>
+      <div class="ms-sub">This month</div>
+    </div>
+    <div class="mini-stat b">
+      <div class="ms-label">Pending</div>
+      <div class="ms-val b" id="totalPending">$0</div>
+      <div class="ms-sub" id="pendingCount">0 transactions</div>
+    </div>
+
+    <!-- Fund a Deal -->
+    <div class="fund-card">
+      <div class="fund-title">💼 Fund a Deal</div>
+      <div class="fund-sub">Investor → Entrepreneur direct funding</div>
+      <div class="fund-flow">
+        <div class="ff-party"><div class="ff-name">Sarah Chen</div><div class="ff-role">Investor</div></div>
+        <div class="ff-arrow">→</div>
+        <div class="ff-party"><div class="ff-name">Alex Rivera</div><div class="ff-role">Entrepreneur</div></div>
+      </div>
+      <div class="fund-amount-row">
+        <input class="fund-inp" type="number" id="fundAmount" placeholder="$0.00" />
+        <button class="fund-btn" onclick="fundDeal()">Fund →</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);font-family:var(--fm)">Secured · Escrowed · Instant</div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- MODALS -->
+<div class="modal-bg" id="actionModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="actionModalTitle">Deposit</div>
+      <button class="modal-x" onclick="closeModal('actionModal')">✕</button>
+    </div>
+    <label class="field-lbl">Amount (USD)</label>
+    <div class="amount-inp-wrap" style="margin-bottom:16px">
+      <span class="currency-pre">$</span>
+      <input class="inp amount-inp" type="number" id="actionAmount" placeholder="0.00" style="margin-bottom:0" />
+    </div>
+    <label class="field-lbl">Note</label>
+    <input class="inp" type="text" id="actionNote" placeholder="Optional note…" style="margin-bottom:20px" />
+    <button class="send-btn" id="actionConfirmBtn" onclick="confirmAction()">Confirm →</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="successModal">
+  <div class="modal">
+    <div class="success-modal">
+      <div class="sm-icon">✅</div>
+      <div class="sm-title" id="successTitle">Payment Sent!</div>
+      <div class="sm-sub" id="successSub">Your transaction was processed successfully.</div>
+      <div class="sm-ref" id="successRef">REF: —</div>
+      <button class="modal-btn" onclick="closeModal('successModal')">Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+/* Helpers */
+function uid(){return Math.random().toString(36).slice(2,9).toUpperCase()}
+function fmt(n){return '$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function toast(msg,type='i'){const t=document.createElement('div');t.className=`toast ${type}`;t.textContent=msg;document.getElementById('toasts').appendChild(t);setTimeout(()=>t.remove(),3200)}
+function openModal(m){document.getElementById('actionModal').classList.add('open');document.getElementById('actionModalTitle').textContent=m.charAt(0).toUpperCase()+m.slice(1);document.getElementById('actionModal').dataset.mode=m;document.getElementById('actionAmount').focus()}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+/* State */
+let balance=48250;
+let txFilter='all';
+
+const contacts=[
+  {name:'Sarah Chen',role:'Investor',av:'SC',grad:'linear-gradient(135deg,#00e5a0,#3d7eff)'},
+  {name:'Marcus Webb',role:'Entrepreneur',av:'MW',grad:'linear-gradient(135deg,#ffc84a,#ff3d5a)'},
+  {name:'Jennifer Park',role:'VC Fund',av:'JP',grad:'linear-gradient(135deg,#b06cff,#3d7eff)'},
+  {name:'David Kim',role:'Investor',av:'DK',grad:'linear-gradient(135deg,#3d7eff,#00e5a0)'},
+];
+
+let txs=[
+  {id:uid(),type:'in', name:'Sarah Chen',   role:'Investor',     note:'Series A milestone payment',     amount:15000,date:'2026-02-22',status:'completed'},
+  {id:uid(),type:'out',name:'Marcus Webb',   role:'Entrepreneur', note:'Product dev collaboration fee',  amount:3200, date:'2026-02-20',status:'completed'},
+  {id:uid(),type:'in', name:'Jennifer Park', role:'VC Fund',      note:'Seed round tranche 2',           amount:25000,date:'2026-02-18',status:'completed'},
+  {id:uid(),type:'pending',name:'David Kim', role:'Investor',     note:'Due diligence deposit',          amount:5000, date:'2026-02-17',status:'pending'},
+  {id:uid(),type:'out',name:'Jennifer Park', role:'VC Fund',      note:'Legal fee reimbursement',        amount:1800, date:'2026-02-14',status:'completed'},
+  {id:uid(),type:'in', name:'Sarah Chen',   role:'Investor',     note:'Advisory retainer — Feb',        amount:2500, date:'2026-02-10',status:'completed'},
+  {id:uid(),type:'pending',name:'Marcus Webb',role:'Entrepreneur',note:'Partnership agreement payment', amount:4500, date:'2026-02-08',status:'pending'},
+  {id:uid(),type:'out',name:'David Kim',    role:'Investor',     note:'Escrow holding fee',             amount:800,  date:'2026-02-05',status:'completed'},
+];
+
+/* Render Transactions */
+const typeIcon={in:'⬇',out:'⬆',pending:'⏳'};
+const typeLabel={in:'RECEIVED',out:'SENT',pending:'PENDING'};
+
+function renderTx(){
+  const list=document.getElementById('txList');
+  const filtered=txFilter==='all'?txs:txs.filter(t=>t.type===txFilter);
+  list.innerHTML='';
+
+  // group by date
+  const groups={};
+  filtered.forEach(t=>{if(!groups[t.date])groups[t.date]=[];groups[t.date].push(t)});
+
+  let count=0;
+  Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach(date=>{
+    const div=document.createElement('div');
+    div.className='tx-divider';
+    div.textContent=new Date(date+'T00:00:00').toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+    list.appendChild(div);
+
+    groups[date].forEach(t=>{
+      count++;
+      const row=document.createElement('div');
+      row.className='tx-row';
+      const sign=t.type==='in'?'+':t.type==='out'?'-':'~';
+      row.innerHTML=`
+        <div class="tx-icon-wrap ${t.type}">${typeIcon[t.type]}</div>
+        <div class="tx-body">
+          <div class="tx-name">${t.name} <span style="font-weight:400;color:var(--muted);font-size:11px">· ${t.role}</span></div>
+          <div class="tx-meta">${t.note} · REF:${t.id}</div>
+        </div>
+        <div>
+          <div class="tx-amount ${t.type}">${sign}${fmt(t.amount)}</div>
+          <div class="tx-status ${t.type}">${typeLabel[t.type]}</div>
+        </div>
+      `;
+      list.appendChild(row);
+    });
+  });
+
+  document.getElementById('txCount').textContent=`${count} entries`;
+}
+
+function renderStats(){
+  const totalIn=txs.filter(t=>t.type==='in').reduce((s,t)=>s+t.amount,0);
+  const totalOut=txs.filter(t=>t.type==='out').reduce((s,t)=>s+t.amount,0);
+  const pending=txs.filter(t=>t.type==='pending');
+  const totalPending=pending.reduce((s,t)=>s+t.amount,0);
+
+  document.getElementById('totalIn').textContent=fmt(totalIn);
+  document.getElementById('totalOut').textContent=fmt(totalOut);
+  document.getElementById('totalPending').textContent=fmt(totalPending);
+  document.getElementById('pendingCount').textContent=`${pending.length} transaction${pending.length!==1?'s':''}`;
+  document.getElementById('balanceInt').textContent=balance.toLocaleString();
+
+  // mini chart
+  const chartEl=document.getElementById('chartIn');
+  chartEl.innerHTML='';
+  const vals=[4200,8100,5600,12000,9200,15000,totalIn];
+  const max=Math.max(...vals);
+  const colors=['b','b','b','b','b','b','g'];
+  vals.forEach((v,i)=>{
+    const b=document.createElement('div');
+    b.className=`mc-bar ${colors[i]}${i===vals.length-1?' active':''}`;
+    b.style.height=Math.max(6,Math.round((v/max)*36))+'px';
+    chartEl.appendChild(b);
+  });
+}
+
+function setTxFilter(f,el){
+  txFilter=f;
+  document.querySelectorAll('.tx-filter').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+  renderTx();
+}
+
+/* Recipient Select */
+function updateRecipient(){
+  const val=document.getElementById('recipientSel').value;
+  const preview=document.getElementById('recipientPreview');
+  if(!val){preview.style.display='none';return}
+  const [name,role]=val.split('|');
+  const c=contacts.find(x=>x.name===name);
+  document.getElementById('rpAv').textContent=c?c.av:name.slice(0,2).toUpperCase();
+  if(c)document.getElementById('rpAv').style.background=c.grad;
+  document.getElementById('rpName').textContent=name;
+  document.getElementById('rpRole').textContent=role;
+  preview.style.display='flex';
+}
+
+/* Send Money */
+function sendMoney(){
+  const recVal=document.getElementById('recipientSel').value;
+  const amount=parseFloat(document.getElementById('sendAmount').value);
+  const note=document.getElementById('sendNote').value||'Transfer';
+  if(!recVal){toast('Select a recipient','e');return}
+  if(!amount||amount<=0){toast('Enter a valid amount','e');return}
+  if(amount>balance){toast('Insufficient balance','e');return}
+
+  const [name,role]=recVal.split('|');
+  balance-=amount;
+  txs.unshift({id:uid(),type:'out',name,role,note,amount,date:new Date().toISOString().split('T')[0],status:'completed'});
+
+  renderTx();renderStats();
+  document.getElementById('recipientSel').value='';
+  document.getElementById('sendAmount').value='';
+  document.getElementById('sendNote').value='';
+  document.getElementById('recipientPreview').style.display='none';
+
+  showSuccess(`Sent ${fmt(amount)}`,`Payment to ${name} processed.`);
+}
+
+/* Action Modal */
+let pendingAction='';
+function confirmAction(){
+  const amount=parseFloat(document.getElementById('actionAmount').value);
+  const note=document.getElementById('actionNote').value||pendingAction;
+  const mode=document.getElementById('actionModal').dataset.mode;
+  if(!amount||amount<=0){toast('Enter a valid amount','e');return}
+  if(mode==='withdraw'&&amount>balance){toast('Insufficient balance','e');return}
+
+  if(mode==='deposit'){balance+=amount;txs.unshift({id:uid(),type:'in',name:'Bank Transfer',role:'External',note:note||'Deposit',amount,date:new Date().toISOString().split('T')[0],status:'completed'})}
+  else if(mode==='withdraw'){balance-=amount;txs.unshift({id:uid(),type:'out',name:'Bank Withdrawal',role:'External',note:note||'Withdrawal',amount,date:new Date().toISOString().split('T')[0],status:'completed'})}
+  else{txs.unshift({id:uid(),type:'pending',name:'Internal Transfer',role:'Nexus',note:note||'Transfer',amount,date:new Date().toISOString().split('T')[0],status:'pending'})}
+
+  renderTx();renderStats();
+  closeModal('actionModal');
+  document.getElementById('actionAmount').value='';
+  showSuccess(`${mode.charAt(0).toUpperCase()+mode.slice(1)} of ${fmt(amount)}`,`${mode} processed successfully.`);
+}
+
+function fundDeal(){
+  const amount=parseFloat(document.getElementById('fundAmount').value);
+  if(!amount||amount<=0){toast('Enter a funding amount','e');return}
+  txs.unshift({id:uid(),type:'in',name:'Sarah Chen',role:'Investor (Deal Funding)',note:'Deal funding — Series A',amount,date:new Date().toISOString().split('T')[0],status:'completed'});
+  balance+=amount;
+  document.getElementById('fundAmount').value='';
+  renderTx();renderStats();
+  showSuccess(`Deal Funded: ${fmt(amount)}`,`Investor → Entrepreneur transfer complete.`);
+}
+
+function showSuccess(title,sub){
+  document.getElementById('successTitle').textContent=title;
+  document.getElementById('successSub').textContent=sub;
+  document.getElementById('successRef').textContent=`REF: NXS-${uid()}`;
+  document.getElementById('successModal').classList.add('open');
+}
+
+document.querySelectorAll('.modal-bg').forEach(b=>b.addEventListener('click',e=>{if(e.target===b)b.classList.remove('open')}));
+
+renderTx();renderStats();
+</script>
+</body>
+</html>

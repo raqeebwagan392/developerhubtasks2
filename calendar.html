@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nexus — Meeting Calendar</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* Reset & Variables */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0d0f14;
+    --surface:   #161920;
+    --surface2:  #1e2230;
+    --border:    rgba(255,255,255,0.07);
+    --border2:   rgba(255,255,255,0.12);
+    --text:      #eef0f6;
+    --text-muted:#7a80a0;
+    --accent:    #4f7eff;
+    --accent2:   #7c5cfc;
+    --green:     #22d07a;
+    --amber:     #f5a623;
+    --red:       #f06069;
+    --purple:    #9d7bff;
+
+    --font-display: 'DM Serif Display', serif;
+    --font-body:    'DM Sans', sans-serif;
+
+    --radius-sm: 8px;
+    --radius:    14px;
+    --radius-lg: 20px;
+    --shadow:    0 4px 24px rgba(0,0,0,0.4);
+    --shadow-lg: 0 12px 48px rgba(0,0,0,0.6);
+  }
+
+  html { font-size: 16px; }
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  /* Subtle grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(79,126,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,126,255,0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Layout */
+  .app { position: relative; z-index: 1; }
+
+  /* Sidebar */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: 240px;
+    height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 0;
+    z-index: 100;
+    transition: transform 0.3s ease;
+  }
+
+  .logo {
+    padding: 0 24px 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .logo-mark {
+    font-family: var(--font-display);
+    font-size: 22px;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .logo-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .nav-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 0 24px 8px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 24px;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+    text-decoration: none;
+    border-radius: 0;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+  }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  .nav-item.active {
+    color: var(--accent);
+    background: rgba(79,126,255,0.08);
+    border-left: 3px solid var(--accent);
+  }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .nav-badge {
+    margin-left: auto;
+    background: var(--amber);
+    color: #000;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 20px;
+    min-width: 18px;
+    text-align: center;
+  }
+
+  /* Main Content */
+  .main {
+    margin-left: 240px;
+    padding: 32px;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .page-title {
+    font-family: var(--font-display);
+    font-size: 32px;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+  }
+  .page-title span { color: var(--accent); font-style: italic; }
+  .page-sub { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+
+  .header-actions { display: flex; gap: 10px; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    white-space: nowrap;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #3d6ce0; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(79,126,255,0.4); }
+  .btn-ghost {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border2);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.06); }
+  .btn-danger {
+    background: rgba(240,96,105,0.15);
+    color: var(--red);
+    border: 1px solid rgba(240,96,105,0.25);
+  }
+  .btn-danger:hover { background: rgba(240,96,105,0.25); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-icon { padding: 8px; width: 34px; height: 34px; justify-content: center; }
+
+  /* Stats */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    border-radius: 2px 2px 0 0;
+  }
+  .stat-card.blue::before  { background: var(--accent); }
+  .stat-card.amber::before { background: var(--amber); }
+  .stat-card.green::before { background: var(--green); }
+  .stat-card.purple::before{ background: var(--purple); }
+  .stat-card:hover { border-color: var(--border2); }
+
+  .stat-icon { font-size: 20px; margin-bottom: 8px; }
+  .stat-value { font-size: 28px; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+  .stat-card.blue  .stat-value { color: var(--accent); }
+  .stat-card.amber .stat-value { color: var(--amber); }
+  .stat-card.green .stat-value { color: var(--green); }
+  .stat-card.purple .stat-value { color: var(--purple); }
+  .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+  /* Grid Layout */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .card-body { padding: 24px; }
+
+  /* Calendar */
+  .cal-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .cal-month {
+    font-family: var(--font-display);
+    font-size: 20px;
+    letter-spacing: -0.3px;
+  }
+  .cal-nav-btn {
+    width: 32px; height: 32px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .cal-nav-btn:hover { background: rgba(255,255,255,0.08); }
+
+  .cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 8px;
+  }
+  .cal-weekday {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 6px 0;
+  }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+  }
+
+  .cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    border: 1px solid transparent;
+    gap: 3px;
+  }
+  .cal-day:hover:not(.empty) { background: rgba(255,255,255,0.05); }
+  .cal-day.today {
+    border-color: var(--accent);
+  }
+  .cal-day.today .day-num { color: var(--accent); font-weight: 700; }
+  .cal-day.selected {
+    background: rgba(79,126,255,0.15);
+    border-color: rgba(79,126,255,0.5);
+  }
+  .cal-day.selected .day-num { color: var(--accent); }
+  .cal-day.empty { cursor: default; }
+
+  .day-num {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    line-height: 1;
+  }
+  .cal-day:not(.empty):hover .day-num { color: var(--text); }
+
+  .day-dots {
+    display: flex;
+    gap: 2px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 100%;
+  }
+  .dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-blue   { background: var(--accent); }
+  .dot-green  { background: var(--green); }
+  .dot-amber  { background: var(--amber); }
+  .dot-red    { background: var(--red); }
+  .dot-purple { background: var(--purple); }
+
+  .cal-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding-top: 16px;
+    margin-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* Sidebar Panel */
+  .side-panel { display: flex; flex-direction: column; gap: 14px; }
+
+  .quick-actions { display: flex; flex-direction: column; gap: 8px; }
+  .quick-actions .btn { width: 100%; justify-content: center; }
+
+  .selected-day-panel {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 16px;
+    display: none;
+  }
+  .selected-day-panel.visible { display: block; }
+  .selected-day-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .day-event-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+  .day-event-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .day-event-text { color: var(--text); font-weight: 500; flex: 1; }
+  .no-events { font-size: 12px; color: var(--text-muted); text-align: center; padding: 8px 0; }
+
+  .avail-slots { display: flex; flex-direction: column; gap: 6px; }
+  .avail-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(157,123,255,0.08);
+    border: 1px solid rgba(157,123,255,0.2);
+    border-radius: 8px;
+    padding: 8px 12px;
+  }
+  .avail-date { font-size: 12px; font-weight: 600; color: var(--purple); }
+  .avail-time { font-size: 11px; color: var(--text-muted); }
+  .avail-remove {
+    background: none;
+    border: none;
+    color: var(--red);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 4px;
+    line-height: 1;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+  }
+  .avail-remove:hover { opacity: 1; }
+
+  /* Meetings Table */
+  .meetings-section { }
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .section-title-group { }
+  .section-title { font-size: 16px; font-weight: 700; }
+  .section-sub { font-size: 12px; color: var(--amber); margin-top: 2px; }
+
+  .tabs {
+    display: flex;
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+    gap: 2px;
+  }
+  .tab {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+    background: none;
+    font-family: var(--font-body);
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+
+  .meetings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+
+  .meeting-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .meeting-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px;
+    height: 100%;
+  }
+  .meeting-card.status-confirmed::before { background: var(--green); }
+  .meeting-card.status-pending::before   { background: var(--amber); }
+  .meeting-card.status-declined::before  { background: var(--red); }
+  .meeting-card:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: var(--shadow); }
+
+  .mc-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .mc-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .mc-with {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .badge-confirmed { background: rgba(34,208,122,0.12); color: var(--green); border: 1px solid rgba(34,208,122,0.25); }
+  .badge-pending   { background: rgba(245,166,35,0.12);  color: var(--amber); border: 1px solid rgba(245,166,35,0.25); }
+  .badge-declined  { background: rgba(240,96,105,0.12);  color: var(--red);   border: 1px solid rgba(240,96,105,0.25); }
+
+  .mc-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .mc-chip {
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--surface2);
+    border-radius: 6px;
+    padding: 3px 8px;
+    border: 1px solid var(--border);
+  }
+
+  .mc-notes {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-style: italic;
+    border-left: 2px solid var(--border2);
+    padding-left: 8px;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+
+  .mc-actions { display: flex; gap: 6px; }
+
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 48px 16px;
+    color: var(--text-muted);
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 10px; }
+  .empty-label { font-size: 14px; }
+
+  /* Modal */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(6px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    padding: 16px;
+  }
+  .modal-backdrop.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    width: 100%;
+    max-width: 460px;
+    box-shadow: var(--shadow-lg);
+    animation: modal-in 0.2s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes modal-in {
+    from { opacity: 0; transform: scale(0.93) translateY(8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+  }
+  .modal-title {
+    font-family: var(--font-display);
+    font-size: 22px;
+  }
+  .modal-close {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .modal-close:hover { color: var(--text); background: rgba(255,255,255,0.08); }
+
+  .form-row { margin-bottom: 14px; }
+  .form-row.cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  input, select, textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 13px;
+    transition: border-color 0.15s;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79,126,255,0.15);
+  }
+  input::placeholder, textarea::placeholder { color: var(--text-muted); }
+  textarea { resize: none; }
+  select option { background: var(--surface2); }
+
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .form-actions .btn { flex: 1; justify-content: center; padding: 11px; }
+
+  /* Toast */
+  .toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .toast {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: toast-in 0.3s ease;
+    max-width: 300px;
+  }
+  @keyframes toast-in {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .toast.success { border-left: 3px solid var(--green); }
+  .toast.info    { border-left: 3px solid var(--accent); }
+  .toast.warning { border-left: 3px solid var(--amber); }
+
+  /* Responsive */
+  .hamburger {
+    display: none;
+    position: fixed;
+    top: 16px; left: 16px;
+    z-index: 200;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 8px 10px;
+    cursor: pointer;
+    color: var(--text);
+    font-size: 18px;
+    line-height: 1;
+  }
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 99;
+  }
+
+  @media (max-width: 1024px) {
+    .content-grid { grid-template-columns: 1fr; }
+    .side-panel { flex-direction: row; flex-wrap: wrap; }
+    .side-panel .card { flex: 1; min-width: 220px; }
+    .selected-day-panel { min-width: 200px; }
+  }
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-overlay.open { display: block; }
+    .hamburger { display: block; }
+    .main { margin-left: 0; padding: 16px; padding-top: 60px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .side-panel { flex-direction: column; }
+  }
+  @media (max-width: 480px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .form-row.cols-2 { grid-template-columns: 1fr; }
+    .modal { padding: 20px; }
+  }
+</style>
+
+<style id="nx-nav-style">
+/* NEXUS SHARED TOPNAV */
+.nx-topnav{
+  position:fixed;top:0;left:0;right:0;z-index:9999;
+  background:#0a0c12;
+  border-bottom:1px solid rgba(255,255,255,0.07);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;height:52px;
+  font-family:'DM Sans','Outfit',sans-serif;
+}
+.nx-brand{
+  font-size:15px;font-weight:800;letter-spacing:3px;
+  color:#00e5a0;cursor:pointer;flex-shrink:0;
+}
+.nx-links{display:flex;gap:2px;}
+.nx-link{
+  display:flex;align-items:center;gap:5px;
+  padding:6px 12px;border-radius:8px;
+  font-size:12px;font-weight:500;
+  text-decoration:none;color:rgba(255,255,255,0.45);
+  transition:all .15s;white-space:nowrap;
+}
+.nx-link:hover{color:#fff;background:rgba(255,255,255,0.07);}
+.nx-link.active{color:#00e5a0;background:rgba(0,229,160,0.1);}
+.nx-ham{
+  display:none;background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.1);border-radius:7px;
+  color:#fff;font-size:16px;padding:5px 9px;cursor:pointer;
+}
+/* Push page content down */
+body > *:not(.nx-topnav){margin-top:0}
+.main,.page,.lobby-body,.hero,.topbar,.topnav,.shell,.page-wrapper{
+  padding-top:0 !important;
+}
+/* Hide original navbars once we inject ours */
+.sidebar,.topbar,.topnav,.header,.call-header+.video-stage,.topbar+*{
+  /* don't hide — just override top offset */
+}
+@media(max-width:700px){
+  .nx-links{
+    display:none;flex-direction:column;
+    position:fixed;top:52px;left:0;right:0;
+    background:#0a0c12;border-bottom:1px solid rgba(255,255,255,0.1);
+    padding:8px 0;z-index:9998;
+  }
+  .nx-links.open{display:flex;}
+  .nx-link{padding:10px 20px;border-radius:0;font-size:13px;}
+  .nx-ham{display:block;}
+}
+</style>
+
+<style id="nx-body-offset">
+  /* Offset page body below fixed topnav (52px) */
+  body { padding-top: 52px !important; }
+  /* Calendar has its own sidebar layout — fix its main content */
+  .main { padding-top: 0 !important; }
+  /* video call screen takes full height - handle it */
+  #callScreen { padding-top: 0 !important; }
+  #lobby { padding-top: 0 !important; }
+</style>
+</head>
+<body>
+<nav class="nx-topnav" id="nxTopnav">
+  <div class="nx-brand" onclick="location.href='dashboard.html'">NEXUS</div>
+  <div class="nx-links" id="nxLinks">
+    <a class="nx-link" href="dashboard.html">⊞ Dashboard</a>
+    <a class="nx-link active" href="calendar.html">📅 Calendar</a>
+    <a class="nx-link" href="video-call.html">🎥 Video</a>
+    <a class="nx-link" href="documents.html">📁 Docs</a>
+    <a class="nx-link" href="payments.html">💳 Payments</a>
+    <a class="nx-link" href="security.html">🔐 Security</a>
+  </div>
+  <button class="nx-ham" id="nxHam" onclick="document.getElementById('nxLinks').classList.toggle('open')">☰</button>
+</nav>
+
+<!-- Hamburger -->
+<button class="hamburger" id="hamburger">☰</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+  <div class="logo">
+    <div class="logo-mark">Nexus</div>
+    <div class="logo-sub">Investor Platform</div>
+  </div>
+
+  <div class="nav-section-label">Navigation</div>
+  <button class="nav-item"><span class="nav-icon">⊞</span> Dashboard</button>
+  <button class="nav-item active"><span class="nav-icon">📅</span> Calendar <span class="nav-badge" id="pendingBadge">2</span></button>
+  <button class="nav-item"><span class="nav-icon">👥</span> Connections</button>
+  <button class="nav-item"><span class="nav-icon">📁</span> Documents</button>
+  <button class="nav-item"><span class="nav-icon">💳</span> Payments</button>
+  <button class="nav-item"><span class="nav-icon">🔔</span> Notifications</button>
+
+  <div style="margin-top:auto; padding: 16px 24px; border-top: 1px solid var(--border);">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;">A</div>
+      <div>
+        <div style="font-size:13px;font-weight:600;">Abdul Raqeeb</div>
+        <div style="font-size:11px;color:var(--text-muted);">Entrepreneur</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Main -->
+<div class="main app">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Meeting <span>Calendar</span></h1>
+      <p class="page-sub">Schedule and manage your investor &amp; entrepreneur meetings</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost" onclick="openSlotModal()">🕐 Add Availability</button>
+      <button class="btn btn-primary" onclick="openMeetingModal()">+ Schedule Meeting</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card blue">
+      <div class="stat-icon">📅</div>
+      <div class="stat-value" id="statTotal">0</div>
+      <div class="stat-label">Total Meetings</div>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-icon">⏳</div>
+      <div class="stat-value" id="statPending">0</div>
+      <div class="stat-label">Pending</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-icon">✅</div>
+      <div class="stat-value" id="statConfirmed">0</div>
+      <div class="stat-label">Confirmed</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-icon">🕐</div>
+      <div class="stat-value" id="statSlots">0</div>
+      <div class="stat-label">Open Slots</div>
+    </div>
+  </div>
+
+  <!-- Calendar + Side Panel -->
+  <div class="content-grid">
+    <!-- Calendar Card -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title" id="calMonthLabel"></span>
+        <div style="display:flex;gap:6px;">
+          <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
+          <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="cal-weekdays">
+          <div class="cal-weekday">Sun</div>
+          <div class="cal-weekday">Mon</div>
+          <div class="cal-weekday">Tue</div>
+          <div class="cal-weekday">Wed</div>
+          <div class="cal-weekday">Thu</div>
+          <div class="cal-weekday">Fri</div>
+          <div class="cal-weekday">Sat</div>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div class="cal-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> Confirmed</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div> Pending</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Declined</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div> Available</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Side Panel -->
+    <div class="side-panel">
+      <!-- Quick Actions -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">⚡ Quick Actions</span></div>
+        <div class="card-body" style="padding:16px;">
+          <div class="quick-actions">
+            <button class="btn btn-primary" onclick="openMeetingModal()">+ Schedule Meeting</button>
+            <button class="btn btn-ghost" onclick="openSlotModal()">🕐 Add Availability</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selected Day Info -->
+      <div class="selected-day-panel" id="selectedDayPanel">
+        <div class="selected-day-title" id="selectedDayTitle"></div>
+        <div id="selectedDayEvents"></div>
+      </div>
+
+      <!-- Availability Slots -->
+      <div class="card" id="availCard" style="display:none;">
+        <div class="card-header"><span class="card-title">🕐 Availability</span></div>
+        <div class="card-body" style="padding:16px;">
+          <div class="avail-slots" id="availList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Meetings Section -->
+  <div class="meetings-section">
+    <div class="section-header">
+      <div class="section-title-group">
+        <div class="section-title">Meeting Requests</div>
+        <div class="section-sub" id="pendingLabel"></div>
+      </div>
+      <div class="tabs" id="tabGroup">
+        <button class="tab active" data-tab="all" onclick="setTab('all', this)">All</button>
+        <button class="tab" data-tab="pending" onclick="setTab('pending', this)">Pending</button>
+        <button class="tab" data-tab="confirmed" onclick="setTab('confirmed', this)">Confirmed</button>
+        <button class="tab" data-tab="declined" onclick="setTab('declined', this)">Declined</button>
+      </div>
+    </div>
+    <div class="meetings-grid" id="meetingsGrid"></div>
+  </div>
+</div>
+
+<!-- ── Meeting Modal ── -->
+<div class="modal-backdrop" id="meetingModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Schedule Meeting</span>
+      <button class="modal-close" onclick="closeMeetingModal()">✕</button>
+    </div>
+    <form id="meetingForm" onsubmit="submitMeetingForm(event)">
+      <div class="form-row">
+        <label>Meeting Title *</label>
+        <input type="text" id="mTitle" placeholder="e.g. Pitch Review Session" required />
+      </div>
+      <div class="form-row cols-2">
+        <div>
+          <label>Date</label>
+          <input type="date" id="mDate" required />
+        </div>
+        <div>
+          <label>Time</label>
+          <input type="time" id="mTime" value="10:00" required />
+        </div>
+      </div>
+      <div class="form-row cols-2">
+        <div>
+          <label>Duration</label>
+          <select id="mDuration">
+            <option value="15">15 min</option>
+            <option value="30" selected>30 min</option>
+            <option value="45">45 min</option>
+            <option value="60">60 min</option>
+            <option value="90">90 min</option>
+          </select>
+        </div>
+        <div>
+          <label>Their Role</label>
+          <select id="mRole">
+            <option value="investor">Investor</option>
+            <option value="entrepreneur">Entrepreneur</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Meeting With *</label>
+        <input type="text" id="mWith" placeholder="Name (Role)" required />
+      </div>
+      <div class="form-row">
+        <label>Notes (optional)</label>
+        <textarea id="mNotes" rows="2" placeholder="Agenda, topics to discuss..."></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeMeetingModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Schedule Meeting →</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Slot Modal -->
+<div class="modal-backdrop" id="slotModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Add Availability</span>
+      <button class="modal-close" onclick="closeSlotModal()">✕</button>
+    </div>
+    <form id="slotForm" onsubmit="submitSlotForm(event)">
+      <div class="form-row">
+        <label>Date</label>
+        <input type="date" id="sDate" required />
+      </div>
+      <div class="form-row cols-2">
+        <div>
+          <label>From</label>
+          <input type="time" id="sStart" value="09:00" required />
+        </div>
+        <div>
+          <label>To</label>
+          <input type="time" id="sEnd" value="12:00" required />
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeSlotModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" style="background:var(--purple);">Save Slot</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+/* State */
+const MONTH_NAMES = ['January','February','March','April','May','June',
+                     'July','August','September','October','November','December'];
+const DAY_NAMES   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+function uid() { return Math.random().toString(36).slice(2,9); }
+function today() { return new Date().toISOString().split('T')[0]; }
+
+// Seed data
+let meetings = [
+  { id: uid(), title: 'Pitch Review Session', date: today(), time: '10:00', duration: 60,
+    with: 'Sarah Chen', role: 'investor', status: 'confirmed', notes: 'Discuss Series A funding opportunity' },
+  { id: uid(), title: 'Product Demo', date: offsetDate(2), time: '14:00', duration: 30,
+    with: 'Marcus Webb', role: 'entrepreneur', status: 'pending', notes: 'SaaS product walkthrough' },
+  { id: uid(), title: 'Due Diligence Call', date: offsetDate(5), time: '11:30', duration: 90,
+    with: 'Jennifer Park', role: 'investor', status: 'pending', notes: '' },
+  { id: uid(), title: 'Term Sheet Review', date: offsetDate(8), time: '09:00', duration: 60,
+    with: 'David Kim', role: 'investor', status: 'confirmed', notes: 'Finalise valuation terms' },
+  { id: uid(), title: 'Founders Meeting', date: offsetDate(-3), time: '15:00', duration: 45,
+    with: 'Lisa Tan', role: 'entrepreneur', status: 'declined', notes: '' },
+];
+
+let slots = [
+  { id: uid(), date: offsetDate(1), startTime: '09:00', endTime: '12:00' },
+  { id: uid(), date: offsetDate(3), startTime: '14:00', endTime: '17:00' },
+];
+
+function offsetDate(days) {
+  const d = new Date(); d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+
+let currentYear  = new Date().getFullYear();
+let currentMonth = new Date().getMonth();
+let selectedDate = null;
+let activeTab    = 'all';
+
+/* Render */
+function render() {
+  renderStats();
+  renderCalendar();
+  renderSidePanel();
+  renderMeetings();
+  updatePendingBadge();
+}
+
+function renderStats() {
+  const pending   = meetings.filter(m => m.status === 'pending').length;
+  const confirmed = meetings.filter(m => m.status === 'confirmed').length;
+  document.getElementById('statTotal').textContent     = meetings.length;
+  document.getElementById('statPending').textContent   = pending;
+  document.getElementById('statConfirmed').textContent = confirmed;
+  document.getElementById('statSlots').textContent     = slots.length;
+  document.getElementById('pendingBadge').textContent  = pending;
+  document.getElementById('pendingBadge').style.display = pending ? '' : 'none';
+
+  const pl = document.getElementById('pendingLabel');
+  pl.textContent = pending > 0 ? `${pending} awaiting your response` : '';
+}
+
+function renderCalendar() {
+  document.getElementById('calMonthLabel').textContent = `${MONTH_NAMES[currentMonth]} ${currentYear}`;
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+
+  const firstDay  = new Date(currentYear, currentMonth, 1).getDay();
+  const daysTotal = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const todayStr  = today();
+
+  // Empty cells
+  for (let i = 0; i < firstDay; i++) {
+    const el = document.createElement('div');
+    el.className = 'cal-day empty';
+    grid.appendChild(el);
+  }
+
+  for (let day = 1; day <= daysTotal; day++) {
+    const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const dayMeetings = meetings.filter(m => m.date === dateStr);
+    const daySlots    = slots.filter(s => s.date === dateStr);
+
+    const el = document.createElement('div');
+    el.className = 'cal-day';
+    if (dateStr === todayStr)    el.classList.add('today');
+    if (dateStr === selectedDate) el.classList.add('selected');
+
+    // Day number
+    const numEl = document.createElement('div');
+    numEl.className = 'day-num';
+    numEl.textContent = day;
+    el.appendChild(numEl);
+
+    // Dots
+    if (dayMeetings.length || daySlots.length) {
+      const dotsEl = document.createElement('div');
+      dotsEl.className = 'day-dots';
+      dayMeetings.slice(0,3).forEach(m => {
+        const dot = document.createElement('div');
+        dot.className = `dot ${m.status === 'confirmed' ? 'dot-green' : m.status === 'pending' ? 'dot-amber' : 'dot-red'}`;
+        dotsEl.appendChild(dot);
+      });
+      if (daySlots.length) {
+        const dot = document.createElement('div');
+        dot.className = 'dot dot-purple';
+        dotsEl.appendChild(dot);
+      }
+      el.appendChild(dotsEl);
+    }
+
+    el.addEventListener('click', () => selectDate(dateStr));
+    grid.appendChild(el);
+  }
+}
+
+function selectDate(dateStr) {
+  selectedDate = selectedDate === dateStr ? null : dateStr;
+  renderCalendar();
+  renderSidePanel();
+}
+
+function changeMonth(dir) {
+  currentMonth += dir;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  if (currentMonth < 0)  { currentMonth = 11; currentYear--; }
+  renderCalendar();
+}
+
+function renderSidePanel() {
+  const panel = document.getElementById('selectedDayPanel');
+  const title = document.getElementById('selectedDayTitle');
+  const eventsEl = document.getElementById('selectedDayEvents');
+
+  if (!selectedDate) {
+    panel.classList.remove('visible');
+  } else {
+    panel.classList.add('visible');
+    const d = new Date(selectedDate + 'T00:00:00');
+    title.textContent = `📅 ${d.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'})}`;
+
+    const dm = meetings.filter(m => m.date === selectedDate);
+    const ds = slots.filter(s => s.date === selectedDate);
+    eventsEl.innerHTML = '';
+
+    if (!dm.length && !ds.length) {
+      eventsEl.innerHTML = '<div class="no-events">No events scheduled</div>';
+    } else {
+      dm.forEach(m => {
+        const el = document.createElement('div');
+        el.className = 'day-event-item';
+        const dotColor = m.status === 'confirmed' ? 'var(--green)' : m.status === 'pending' ? 'var(--amber)' : 'var(--red)';
+        el.innerHTML = `<div class="day-event-dot" style="background:${dotColor}"></div>
+                        <div class="day-event-text">${m.time} — ${m.title}</div>`;
+        eventsEl.appendChild(el);
+      });
+      ds.forEach(s => {
+        const el = document.createElement('div');
+        el.className = 'day-event-item';
+        el.innerHTML = `<div class="day-event-dot" style="background:var(--purple)"></div>
+                        <div class="day-event-text">Available ${s.startTime}–${s.endTime}</div>
+                        <button class="avail-remove" onclick="removeSlot('${s.id}')">✕</button>`;
+        eventsEl.appendChild(el);
+      });
+    }
+  }
+
+  // Availability card
+  const availCard = document.getElementById('availCard');
+  const availList = document.getElementById('availList');
+  if (slots.length === 0) {
+    availCard.style.display = 'none';
+  } else {
+    availCard.style.display = '';
+    availList.innerHTML = '';
+    slots.forEach(s => {
+      const el = document.createElement('div');
+      el.className = 'avail-item';
+      el.innerHTML = `<div><div class="avail-date">${s.date}</div><div class="avail-time">${s.startTime} – ${s.endTime}</div></div>
+                      <button class="avail-remove" onclick="removeSlot('${s.id}')">✕</button>`;
+      availList.appendChild(el);
+    });
+  }
+}
+
+function renderMeetings() {
+  const grid = document.getElementById('meetingsGrid');
+  grid.innerHTML = '';
+
+  const filtered = activeTab === 'all' ? meetings : meetings.filter(m => m.status === activeTab);
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-label">No meetings in this category</div></div>`;
+    return;
+  }
+
+  filtered.forEach(m => {
+    const card = document.createElement('div');
+    card.className = `meeting-card status-${m.status}`;
+
+    const badge = `<span class="badge badge-${m.status}">${m.status}</span>`;
+    const notes = m.notes ? `<div class="mc-notes">${m.notes}</div>` : '';
+    const actions = m.status === 'pending'
+      ? `<button class="btn btn-sm" style="background:rgba(34,208,122,0.12);color:var(--green);border:1px solid rgba(34,208,122,0.25);" onclick="updateStatus('${m.id}','confirmed')">✓ Accept</button>
+         <button class="btn btn-sm btn-danger" onclick="updateStatus('${m.id}','declined')">✕ Decline</button>`
+      : '';
+
+    card.innerHTML = `
+      <div class="mc-top">
+        <div>
+          <div class="mc-title">${m.title}</div>
+          <div class="mc-with">with ${m.with} · ${m.role}</div>
+        </div>
+        ${badge}
+      </div>
+      <div class="mc-meta">
+        <div class="mc-chip">📅 ${m.date}</div>
+        <div class="mc-chip">🕐 ${m.time}</div>
+        <div class="mc-chip">⏱ ${m.duration}min</div>
+      </div>
+      ${notes}
+      <div class="mc-actions">
+        ${actions}
+        <button class="btn btn-sm btn-ghost" style="margin-left:auto;" onclick="deleteMeeting('${m.id}')">🗑</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function updatePendingBadge() {
+  const count = meetings.filter(m => m.status === 'pending').length;
+  const b = document.getElementById('pendingBadge');
+  b.textContent = count;
+  b.style.display = count ? '' : 'none';
+}
+
+/* Actions */
+function updateStatus(id, status) {
+  const m = meetings.find(x => x.id === id);
+  if (!m) return;
+  m.status = status;
+  render();
+  toast(status === 'confirmed' ? '✅ Meeting confirmed!' : '❌ Meeting declined', status === 'confirmed' ? 'success' : 'warning');
+}
+
+function deleteMeeting(id) {
+  meetings = meetings.filter(x => x.id !== id);
+  render();
+  toast('🗑 Meeting removed', 'info');
+}
+
+function removeSlot(id) {
+  slots = slots.filter(x => x.id !== id);
+  render();
+  toast('🕐 Availability slot removed', 'info');
+}
+
+function setTab(tab, el) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderMeetings();
+}
+
+/* Modals */
+function openMeetingModal() {
+  document.getElementById('mDate').value = selectedDate || today();
+  document.getElementById('meetingModal').classList.add('open');
+}
+function closeMeetingModal() {
+  document.getElementById('meetingModal').classList.remove('open');
+  document.getElementById('meetingForm').reset();
+}
+function submitMeetingForm(e) {
+  e.preventDefault();
+  const m = {
+    id: uid(),
+    title:    document.getElementById('mTitle').value.trim(),
+    date:     document.getElementById('mDate').value,
+    time:     document.getElementById('mTime').value,
+    duration: parseInt(document.getElementById('mDuration').value),
+    role:     document.getElementById('mRole').value,
+    with:     document.getElementById('mWith').value.trim(),
+    notes:    document.getElementById('mNotes').value.trim(),
+    status:   'pending',
+  };
+  meetings.push(m);
+  render();
+  closeMeetingModal();
+  toast('📅 Meeting scheduled!', 'success');
+}
+
+function openSlotModal() {
+  document.getElementById('sDate').value = selectedDate || today();
+  document.getElementById('slotModal').classList.add('open');
+}
+function closeSlotModal() {
+  document.getElementById('slotModal').classList.remove('open');
+  document.getElementById('slotForm').reset();
+}
+function submitSlotForm(e) {
+  e.preventDefault();
+  slots.push({
+    id: uid(),
+    date:      document.getElementById('sDate').value,
+    startTime: document.getElementById('sStart').value,
+    endTime:   document.getElementById('sEnd').value,
+  });
+  render();
+  closeSlotModal();
+  toast('🕐 Availability added!', 'success');
+}
+
+// Close modals on backdrop click
+document.querySelectorAll('.modal-backdrop').forEach(bd => {
+  bd.addEventListener('click', e => { if (e.target === bd) bd.classList.remove('open'); });
+});
+
+/* Toast */
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+/* Sidebar Toggle */
+document.getElementById('hamburger').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+});
+document.getElementById('sidebarOverlay').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+});
+
+/* Init */
+render();
+</script>
+</body>
+</html>

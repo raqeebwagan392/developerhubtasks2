@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nexus — Document Chamber</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --paper:   #f5f3ee;
+      --paper2:  #ede9e0;
+      --paper3:  #e4dfd3;
+      --ink:     #1a1814;
+      --ink2:    #3d3a35;
+      --ink3:    #6b6560;
+      --line:    rgba(26,24,20,0.1);
+      --line2:   rgba(26,24,20,0.18);
+      --teal:    #007a6e;
+      --teal2:   #005a51;
+      --gold:    #b8860b;
+      --rose:    #a0393b;
+      --slate:   #4a5568;
+      --font-h:  'Playfair Display', serif;
+      --font-b:  'IBM Plex Sans', sans-serif;
+      --r:       8px;
+    }
+
+    body {
+      font-family: var(--font-b);
+      background: var(--paper);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      display: flex; align-items: center; gap: 0;
+      background: var(--ink);
+      padding: 0 32px;
+      height: 54px;
+      flex-shrink: 0;
+    }
+    .topbar-brand {
+      font-family: var(--font-h);
+      font-size: 18px;
+      color: var(--paper);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-right: 32px;
+      flex-shrink: 0;
+    }
+    .topbar-brand span { color: #c8a96e; }
+    .topbar-nav { display: flex; flex: 1; }
+    .tb-link {
+      padding: 0 18px; height: 54px;
+      display: flex; align-items: center;
+      font-size: 12px; font-weight: 500; letter-spacing: 0.5px;
+      color: rgba(245,243,238,0.5);
+      cursor: pointer; background: none; border: none;
+      font-family: var(--font-b);
+      transition: all 0.15s;
+      border-bottom: 3px solid transparent;
+      text-transform: uppercase;
+    }
+    .tb-link:hover  { color: var(--paper); }
+    .tb-link.active { color: #c8a96e; border-bottom-color: #c8a96e; }
+    .topbar-user {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 10px; color: var(--paper);
+    }
+    .tb-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--teal), #c8a96e);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 600;
+    }
+    .tb-name { font-size: 13px; font-weight: 500; }
+
+    /* SHELL: sidebar + content */
+    .shell { display: flex; flex: 1; min-height: 0; }
+
+    /* LEFT SIDEBAR */
+    .leftnav {
+      width: 220px;
+      background: var(--paper2);
+      border-right: 1px solid var(--line2);
+      display: flex; flex-direction: column;
+      flex-shrink: 0;
+      padding: 24px 0;
+    }
+    .ln-section { margin-bottom: 24px; }
+    .ln-label {
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--ink3); padding: 0 18px 8px;
+    }
+    .ln-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 18px; cursor: pointer;
+      font-size: 13px; font-weight: 500; color: var(--ink2);
+      transition: all 0.12s; border: none; background: none;
+      width: 100%; text-align: left; font-family: var(--font-b);
+      border-left: 3px solid transparent;
+    }
+    .ln-item:hover  { background: var(--paper3); color: var(--ink); }
+    .ln-item.active { background: rgba(0,122,110,0.08); color: var(--teal); border-left-color: var(--teal); }
+    .ln-icon { font-size: 15px; width: 18px; text-align: center; }
+    .ln-count {
+      margin-left: auto; background: var(--ink);
+      color: var(--paper); font-size: 10px; font-weight: 700;
+      padding: 1px 6px; border-radius: 10px; min-width: 18px; text-align: center;
+    }
+    .ln-count.teal { background: var(--teal); }
+
+    /* Upload button in nav */
+    .upload-nav-btn {
+      margin: 8px 12px;
+      background: var(--teal); color: #fff;
+      border: none; border-radius: var(--r);
+      padding: 10px 0; width: calc(100% - 24px);
+      font-family: var(--font-b); font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: background 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .upload-nav-btn:hover { background: var(--teal2); }
+
+    /* CONTENT AREA */
+    .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* CONTENT HEADER */
+    .content-header {
+      padding: 20px 28px;
+      background: var(--paper);
+      border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    }
+    .ch-title { font-family: var(--font-h); font-size: 22px; font-weight: 700; flex: 1; }
+
+    .search-bar {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--paper2); border: 1px solid var(--line2);
+      border-radius: var(--r); padding: 8px 14px;
+    }
+    .search-bar input {
+      background: none; border: none; outline: none;
+      font-family: var(--font-b); font-size: 13px; color: var(--ink);
+      width: 200px;
+    }
+    .search-bar input::placeholder { color: var(--ink3); }
+
+    .view-toggle { display: flex; gap: 4px; }
+    .vt-btn {
+      width: 34px; height: 34px; border-radius: 6px;
+      background: none; border: 1px solid var(--line2);
+      cursor: pointer; font-size: 15px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.12s;
+    }
+    .vt-btn:hover, .vt-btn.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+    /* STATUS BAR */
+    .status-bar {
+      display: flex; gap: 0;
+      border-bottom: 1px solid var(--line);
+      padding: 0 28px;
+      background: var(--paper);
+    }
+    .sb-tab {
+      padding: 10px 20px; font-size: 12px; font-weight: 600;
+      letter-spacing: 0.3px; color: var(--ink3);
+      cursor: pointer; border: none; background: none;
+      font-family: var(--font-b); text-transform: uppercase;
+      border-bottom: 2px solid transparent;
+      transition: all 0.12s;
+    }
+    .sb-tab:hover  { color: var(--ink); }
+    .sb-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+    .sb-count { display: inline-block; background: var(--paper2); border-radius: 10px; padding: 1px 7px; font-size: 10px; margin-left: 5px; }
+
+    /* STATS ROW */
+    .stats-row {
+      display: flex; gap: 1px;
+      border-bottom: 1px solid var(--line);
+      background: var(--line);
+    }
+    .stat-cell {
+      flex: 1; background: var(--paper); padding: 16px 20px;
+      text-align: center;
+    }
+    .stat-cell-val { font-family: var(--font-h); font-size: 28px; font-weight: 700; line-height: 1; }
+    .stat-cell.total .stat-cell-val { color: var(--ink); }
+    .stat-cell.draft .stat-cell-val  { color: var(--slate); }
+    .stat-cell.review .stat-cell-val { color: var(--gold); }
+    .stat-cell.signed .stat-cell-val { color: var(--teal); }
+    .stat-cell-lbl { font-size: 11px; color: var(--ink3); margin-top: 3px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* DOCUMENT TABLE */
+    .doc-scroll { flex: 1; overflow-y: auto; }
+    .doc-table { width: 100%; border-collapse: collapse; }
+    .doc-table thead th {
+      padding: 10px 16px; text-align: left;
+      font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--ink3); background: var(--paper2);
+      border-bottom: 1px solid var(--line2);
+      position: sticky; top: 0; z-index: 1;
+    }
+    .doc-table tbody tr {
+      border-bottom: 1px solid var(--line);
+      transition: background 0.1s; cursor: pointer;
+    }
+    .doc-table tbody tr:hover { background: var(--paper2); }
+    .doc-table td { padding: 13px 16px; font-size: 13px; vertical-align: middle; }
+
+    .td-name { display: flex; align-items: center; gap: 10px; }
+    .doc-file-icon { font-size: 24px; flex-shrink: 0; }
+    .doc-name-text { font-weight: 600; color: var(--ink); }
+    .doc-name-sub  { font-size: 11px; color: var(--ink3); margin-top: 1px; }
+
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px;
+      text-transform: uppercase; letter-spacing: 0.3px;
+    }
+    .sp-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .sp-draft  { background: rgba(74,85,104,0.1);  color: var(--slate); }
+    .sp-draft  .sp-dot { background: var(--slate); }
+    .sp-review { background: rgba(184,134,11,0.1); color: var(--gold); }
+    .sp-review .sp-dot { background: var(--gold); }
+    .sp-signed { background: rgba(0,122,110,0.1);  color: var(--teal); }
+    .sp-signed .sp-dot { background: var(--teal); }
+
+    .td-actions { display: flex; gap: 6px; justify-content: flex-end; }
+    .tbl-btn {
+      padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 600;
+      cursor: pointer; border: 1px solid var(--line2); background: none;
+      color: var(--ink2); font-family: var(--font-b); transition: all 0.12s;
+    }
+    .tbl-btn:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+    .tbl-btn.primary { background: var(--teal); color: #fff; border-color: var(--teal); }
+    .tbl-btn.primary:hover { background: var(--teal2); border-color: var(--teal2); }
+
+    .empty-row td { text-align: center; padding: 60px; color: var(--ink3); font-size: 14px; }
+
+    /* PREVIEW DRAWER (slides in from right) */
+    .drawer-bg {
+      display: none; position: fixed; inset: 0;
+      background: rgba(26,24,20,0.4); z-index: 50;
+    }
+    .drawer-bg.open { display: block; }
+    .drawer {
+      position: fixed; top: 0; right: -540px;
+      width: 520px; height: 100vh;
+      background: var(--paper);
+      border-left: 1px solid var(--line2);
+      z-index: 51;
+      display: flex; flex-direction: column;
+      transition: right 0.3s ease;
+      box-shadow: -8px 0 40px rgba(26,24,20,0.15);
+    }
+    .drawer.open { right: 0; }
+
+    .drawer-header {
+      padding: 22px 24px;
+      border-bottom: 1px solid var(--line);
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    }
+    .drawer-title { font-family: var(--font-h); font-size: 20px; line-height: 1.2; }
+    .drawer-meta  { font-size: 12px; color: var(--ink3); margin-top: 4px; }
+    .drawer-close {
+      background: none; border: none; font-size: 20px;
+      color: var(--ink3); cursor: pointer; padding: 2px 4px; flex-shrink: 0;
+    }
+    .drawer-close:hover { color: var(--ink); }
+
+    /* Document paper preview inside drawer */
+    .doc-paper {
+      margin: 20px 24px;
+      background: #fff;
+      border: 1px solid var(--line2);
+      border-radius: 4px;
+      box-shadow: 0 2px 12px rgba(26,24,20,0.08), 0 0 0 1px rgba(26,24,20,0.04);
+      padding: 32px 28px;
+      min-height: 260px;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .doc-paper-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .doc-paper-logo   { font-family: var(--font-h); font-size: 16px; color: var(--teal); }
+    .doc-paper-date   { font-size: 11px; color: var(--ink3); }
+    .doc-paper-lines  { display: flex; flex-direction: column; gap: 8px; }
+    .dp-line {
+      height: 7px; border-radius: 2px;
+      background: var(--paper2);
+    }
+    .dp-line.long   { width: 100%; }
+    .dp-line.medium { width: 68%; }
+    .dp-line.short  { width: 40%; }
+    .dp-line.dark   { background: var(--paper3); }
+    .doc-stamp {
+      position: absolute; bottom: 24px; right: 24px;
+      font-size: 40px; opacity: 0.07;
+      transform: rotate(-15deg);
+      font-family: var(--font-h); font-weight: 700; color: var(--teal);
+      letter-spacing: -2px;
+    }
+
+    /* Status stepper */
+    .stepper { display: flex; align-items: center; padding: 0 24px 20px; }
+    .step { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .step-circle {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid var(--line2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; color: var(--ink3); font-weight: 700;
+      transition: all 0.3s;
+    }
+    .step.done   .step-circle { background: var(--teal); border-color: var(--teal); color: #fff; }
+    .step.active .step-circle { background: var(--gold); border-color: var(--gold); color: #fff; }
+    .step-lbl { font-size: 10px; font-weight: 600; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.5px; }
+    .step.done   .step-lbl { color: var(--teal); }
+    .step.active .step-lbl { color: var(--gold); }
+    .step-bar { flex: 1; height: 2px; background: var(--line2); margin: 0 8px 18px; transition: background 0.3s; }
+    .step-bar.done { background: var(--teal); }
+
+    /* Signature section */
+    .sig-section { padding: 0 24px 20px; }
+    .sig-label { font-size: 12px; font-weight: 600; color: var(--ink2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .sig-pad-wrap {
+      position: relative;
+      background: #fff; border: 1.5px dashed var(--line2);
+      border-radius: var(--r); overflow: hidden; cursor: crosshair;
+    }
+    .sig-pad-wrap canvas { display: block; width: 100%; touch-action: none; }
+    .sig-ph {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; color: var(--ink3); pointer-events: none;
+      font-style: italic;
+    }
+    .sig-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+
+    /* Drawer footer */
+    .drawer-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--line);
+      display: flex; gap: 8px; flex-wrap: wrap;
+      background: var(--paper2);
+      margin-top: auto;
+    }
+    .df-btn {
+      padding: 9px 18px; border-radius: var(--r); font-size: 12px; font-weight: 600;
+      cursor: pointer; border: 1px solid var(--line2); background: var(--paper);
+      color: var(--ink2); font-family: var(--font-b); transition: all 0.12s;
+    }
+    .df-btn:hover { background: var(--paper3); }
+    .df-btn.teal { background: var(--teal); color: #fff; border-color: var(--teal); }
+    .df-btn.teal:hover { background: var(--teal2); border-color: var(--teal2); }
+    .df-btn.gold { background: var(--gold); color: #fff; border-color: var(--gold); }
+
+    /* UPLOAD MODAL */
+    .modal-bg {
+      display: none; position: fixed; inset: 0;
+      background: rgba(26,24,20,0.5); backdrop-filter: blur(4px);
+      z-index: 100; align-items: center; justify-content: center;
+    }
+    .modal-bg.open { display: flex; }
+    .modal-box {
+      background: var(--paper); border-radius: 12px;
+      padding: 28px; width: 480px; max-width: 95vw;
+      border: 1px solid var(--line2);
+      box-shadow: 0 24px 80px rgba(26,24,20,0.25);
+      animation: rise 0.22s ease;
+    }
+    @keyframes rise { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    .modal-title { font-family: var(--font-h); font-size: 20px; margin-bottom: 18px; }
+    .modal-close-btn {
+      float: right; background: none; border: none; font-size: 18px;
+      color: var(--ink3); cursor: pointer; margin-top: -4px;
+    }
+
+    .drop-zone {
+      border: 2px dashed var(--line2); border-radius: var(--r);
+      padding: 32px; text-align: center; cursor: pointer; transition: all 0.15s;
+      margin-bottom: 16px;
+    }
+    .drop-zone:hover, .drop-zone.over { border-color: var(--teal); background: rgba(0,122,110,0.04); }
+    .dz-big   { font-size: 40px; margin-bottom: 10px; }
+    .dz-main  { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .dz-hint  { font-size: 12px; color: var(--ink3); }
+
+    .file-chip {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(0,122,110,0.08); border: 1px solid rgba(0,122,110,0.25);
+      border-radius: var(--r); padding: 10px 14px; margin-bottom: 14px;
+    }
+    .file-chip-name { font-size: 13px; font-weight: 600; flex: 1; color: var(--teal); }
+    .file-chip-size { font-size: 11px; color: var(--ink3); }
+
+    .mf-row { margin-bottom: 12px; }
+    .mf-label { font-size: 11px; font-weight: 600; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; display: block; }
+    .mf-input, .mf-select {
+      width: 100%; background: #fff; border: 1px solid var(--line2);
+      border-radius: var(--r); padding: 9px 12px;
+      font-family: var(--font-b); font-size: 13px; color: var(--ink);
+      outline: none; appearance: none; transition: border-color 0.15s;
+    }
+    .mf-input:focus, .mf-select:focus { border-color: var(--teal); }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+
+    /* Template modal */
+    .tpl-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 4px; }
+    .tpl-card {
+      border: 1px solid var(--line2); border-radius: var(--r);
+      padding: 18px 12px; text-align: center; cursor: pointer; transition: all 0.15s;
+      background: #fff;
+    }
+    .tpl-card:hover { border-color: var(--teal); background: rgba(0,122,110,0.04); transform: translateY(-2px); }
+    .tpl-em { font-size: 28px; margin-bottom: 8px; }
+    .tpl-nm { font-size: 12px; font-weight: 600; color: var(--ink2); }
+
+    /* Toast */
+    .toasts {
+      position: fixed; bottom: 20px; right: 20px;
+      z-index: 999; display: flex; flex-direction: column; gap: 8px;
+    }
+    .toast {
+      background: var(--ink); color: var(--paper);
+      border-radius: 8px; padding: 11px 16px;
+      font-size: 13px; display: flex; align-items: center; gap: 8px;
+      animation: slide-r 0.3s ease; max-width: 280px;
+    }
+    @keyframes slide-r { from{opacity:0;transform:translateX(16px)} to{opacity:1;transform:translateX(0)} }
+    .toast.s { border-left: 3px solid var(--teal); }
+    .toast.i { border-left: 3px solid #c8a96e; }
+    .toast.w { border-left: 3px solid var(--gold); }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .leftnav { display: none; }
+      .drawer { width: 100%; right: -100%; }
+    }
+    @media (max-width: 600px) {
+      .topbar { padding: 0 16px; }
+      .tb-link { display: none; }
+      .content-header { flex-wrap: wrap; gap: 10px; }
+      .tpl-grid { grid-template-columns: repeat(2,1fr); }
+      .stats-row { flex-wrap: wrap; }
+      .stat-cell { min-width: 50%; }
+    }
+  </style>
+
+<style id="nx-nav-style">
+/* NEXUS SHARED TOPNAV */
+.nx-topnav{
+  position:fixed;top:0;left:0;right:0;z-index:9999;
+  background:#0a0c12;
+  border-bottom:1px solid rgba(255,255,255,0.07);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;height:52px;
+  font-family:'DM Sans','Outfit',sans-serif;
+}
+.nx-brand{
+  font-size:15px;font-weight:800;letter-spacing:3px;
+  color:#00e5a0;cursor:pointer;flex-shrink:0;
+}
+.nx-links{display:flex;gap:2px;}
+.nx-link{
+  display:flex;align-items:center;gap:5px;
+  padding:6px 12px;border-radius:8px;
+  font-size:12px;font-weight:500;
+  text-decoration:none;color:rgba(255,255,255,0.45);
+  transition:all .15s;white-space:nowrap;
+}
+.nx-link:hover{color:#fff;background:rgba(255,255,255,0.07);}
+.nx-link.active{color:#00e5a0;background:rgba(0,229,160,0.1);}
+.nx-ham{
+  display:none;background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.1);border-radius:7px;
+  color:#fff;font-size:16px;padding:5px 9px;cursor:pointer;
+}
+/* Push page content down */
+body > *:not(.nx-topnav){margin-top:0}
+.main,.page,.lobby-body,.hero,.topbar,.topnav,.shell,.page-wrapper{
+  padding-top:0 !important;
+}
+/* Hide original navbars once we inject ours */
+.sidebar,.topbar,.topnav,.header,.call-header+.video-stage,.topbar+*{
+  /* don't hide — just override top offset */
+}
+@media(max-width:700px){
+  .nx-links{
+    display:none;flex-direction:column;
+    position:fixed;top:52px;left:0;right:0;
+    background:#0a0c12;border-bottom:1px solid rgba(255,255,255,0.1);
+    padding:8px 0;z-index:9998;
+  }
+  .nx-links.open{display:flex;}
+  .nx-link{padding:10px 20px;border-radius:0;font-size:13px;}
+  .nx-ham{display:block;}
+}
+</style>
+
+<style id="nx-body-offset">
+  /* Offset page body below fixed topnav (52px) */
+  body { padding-top: 52px !important; }
+  /* Calendar has its own sidebar layout — fix its main content */
+  .main { padding-top: 0 !important; }
+  /* video call screen takes full height - handle it */
+  #callScreen { padding-top: 0 !important; }
+  #lobby { padding-top: 0 !important; }
+</style>
+</head>
+<body>
+<nav class="nx-topnav" id="nxTopnav">
+  <div class="nx-brand" onclick="location.href='dashboard.html'">NEXUS</div>
+  <div class="nx-links" id="nxLinks">
+    <a class="nx-link" href="dashboard.html">⊞ Dashboard</a>
+    <a class="nx-link" href="calendar.html">📅 Calendar</a>
+    <a class="nx-link" href="video-call.html">🎥 Video</a>
+    <a class="nx-link active" href="documents.html">📁 Docs</a>
+    <a class="nx-link" href="payments.html">💳 Payments</a>
+    <a class="nx-link" href="security.html">🔐 Security</a>
+  </div>
+  <button class="nx-ham" id="nxHam" onclick="document.getElementById('nxLinks').classList.toggle('open')">☰</button>
+</nav>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-brand">NEX<span>US</span></div>
+  <div class="topbar-nav">
+    <button class="tb-link">Dashboard</button>
+    <button class="tb-link">Calendar</button>
+    <button class="tb-link">Video Calls</button>
+    <button class="tb-link active">Documents</button>
+    <button class="tb-link">Payments</button>
+  </div>
+  <div class="topbar-user">
+    <div class="tb-avatar">A</div>
+    <div class="tb-name">Abdul Raqeeb</div>
+  </div>
+</div>
+
+<!-- SHELL -->
+<div class="shell">
+
+  <!-- LEFT NAV -->
+  <div class="leftnav">
+    <button class="upload-nav-btn" onclick="openUpload()">⬆ Upload</button>
+    <button class="upload-nav-btn" style="background:var(--ink); margin-top:8px;" onclick="openTemplates()">✦ New from Template</button>
+
+    <div class="ln-section" style="margin-top:20px;">
+      <div class="ln-label">Filter by Status</div>
+      <button class="ln-item active" onclick="setFilter('all',this)"><span class="ln-icon">📂</span>All Documents<span class="ln-count" id="cntAll">0</span></button>
+      <button class="ln-item" onclick="setFilter('draft',this)"><span class="ln-icon">✏️</span>Draft<span class="ln-count" id="cntDraft">0</span></button>
+      <button class="ln-item" onclick="setFilter('review',this)"><span class="ln-icon">🔍</span>In Review<span class="ln-count teal" id="cntReview">0</span></button>
+      <button class="ln-item" onclick="setFilter('signed',this)"><span class="ln-icon">✅</span>Signed<span class="ln-count teal" id="cntSigned">0</span></button>
+    </div>
+
+    <div class="ln-section">
+      <div class="ln-label">Category</div>
+      <button class="ln-item" onclick="setFilter('all',this)"><span class="ln-icon">💼</span>Contracts</button>
+      <button class="ln-item" onclick="setFilter('all',this)"><span class="ln-icon">🤝</span>NDAs</button>
+      <button class="ln-item" onclick="setFilter('all',this)"><span class="ln-icon">📋</span>Term Sheets</button>
+      <button class="ln-item" onclick="setFilter('all',this)"><span class="ln-icon">📊</span>Pitch Decks</button>
+    </div>
+  </div>
+
+  <!-- ── CONTENT ── -->
+  <div class="content">
+    <div class="content-header">
+      <div class="ch-title">Document Chamber</div>
+      <div class="search-bar">
+        <span>🔍</span>
+        <input type="text" id="searchIn" placeholder="Search documents…" oninput="renderTable()" />
+      </div>
+      <div class="view-toggle">
+        <button class="vt-btn active" title="Table view">☰</button>
+      </div>
+      <button class="tbl-btn primary" style="padding:8px 18px;" onclick="openUpload()">⬆ Upload</button>
+      <button class="tbl-btn" style="padding:8px 18px;" onclick="openTemplates()">+ New</button>
+    </div>
+
+    <!-- Status tabs -->
+    <div class="status-bar">
+      <button class="sb-tab active" onclick="setTabFilter('all',this)">All <span class="sb-count" id="tb-all">0</span></button>
+      <button class="sb-tab" onclick="setTabFilter('draft',this)">Draft <span class="sb-count" id="tb-draft">0</span></button>
+      <button class="sb-tab" onclick="setTabFilter('review',this)">In Review <span class="sb-count" id="tb-review">0</span></button>
+      <button class="sb-tab" onclick="setTabFilter('signed',this)">Signed <span class="sb-count" id="tb-signed">0</span></button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-cell total"><div class="stat-cell-val" id="sTotal">0</div><div class="stat-cell-lbl">Total Docs</div></div>
+      <div class="stat-cell draft"><div class="stat-cell-val" id="sDraft">0</div><div class="stat-cell-lbl">Draft</div></div>
+      <div class="stat-cell review"><div class="stat-cell-val" id="sReview">0</div><div class="stat-cell-lbl">In Review</div></div>
+      <div class="stat-cell signed"><div class="stat-cell-val" id="sSigned">0</div><div class="stat-cell-lbl">Signed</div></div>
+    </div>
+
+    <!-- Table -->
+    <div class="doc-scroll">
+      <table class="doc-table">
+        <thead>
+          <tr>
+            <th style="width:42%">Document</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Size</th>
+            <th>Owner</th>
+            <th style="text-align:right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="docTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- DOCUMENT PREVIEW DRAWER -->
+<div class="drawer-bg" id="drawerBg" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div>
+      <div class="drawer-title" id="drawerTitle">Document Title</div>
+      <div class="drawer-meta" id="drawerMeta">PDF · 8 pages · 248 KB</div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+
+  <!-- Paper mockup -->
+  <div class="doc-paper" id="docPaper">
+    <div class="doc-paper-header">
+      <div class="doc-paper-logo">NEXUS</div>
+      <div class="doc-paper-date" id="drawerDate"></div>
+    </div>
+    <div class="doc-paper-lines">
+      <div class="dp-line long dark"></div>
+      <div class="dp-line medium"></div>
+      <div class="dp-line long"></div>
+      <div class="dp-line short"></div>
+      <div class="dp-line long"></div>
+      <div class="dp-line medium dark"></div>
+      <div class="dp-line long"></div>
+      <div class="dp-line medium"></div>
+      <div class="dp-line short"></div>
+    </div>
+    <div class="doc-stamp" id="docStamp"></div>
+  </div>
+
+  <!-- Stepper -->
+  <div class="stepper" id="stepper">
+    <div class="step" id="stp-draft">
+      <div class="step-circle">1</div>
+      <div class="step-lbl">Draft</div>
+    </div>
+    <div class="step-bar" id="bar1"></div>
+    <div class="step" id="stp-review">
+      <div class="step-circle">2</div>
+      <div class="step-lbl">Review</div>
+    </div>
+    <div class="step-bar" id="bar2"></div>
+    <div class="step" id="stp-signed">
+      <div class="step-circle">3</div>
+      <div class="step-lbl">Signed</div>
+    </div>
+  </div>
+
+  <!-- Signature pad (shown if not yet signed) -->
+  <div class="sig-section" id="sigSection">
+    <div class="sig-label">E-Signature</div>
+    <div class="sig-pad-wrap">
+      <canvas id="sigCanvas" width="460" height="140"></canvas>
+      <div class="sig-ph" id="sigPh">Draw your signature here ✍️</div>
+    </div>
+    <div class="sig-controls">
+      <button class="df-btn" onclick="clearSig()">🗑 Clear</button>
+      <button class="df-btn teal" onclick="signDoc()">✅ Sign Document</button>
+    </div>
+  </div>
+
+  <div class="drawer-footer" id="drawerFooter">
+    <button class="df-btn" onclick="downloadDoc()">⬇ Download</button>
+    <button class="df-btn" id="reviewBtn" onclick="sendReview()">🔍 Send for Review</button>
+    <button class="df-btn gold" id="shareBtn" onclick="shareDoc()" style="display:none;">🔗 Share Signed</button>
+    <button class="df-btn" style="margin-left:auto; color:var(--rose); border-color:rgba(160,57,59,0.3);" onclick="deleteDoc()">🗑 Delete</button>
+  </div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div class="modal-bg" id="uploadModal">
+  <div class="modal-box">
+    <button class="modal-close-btn" onclick="closeUpload()">✕</button>
+    <div class="modal-title">Upload Document</div>
+    <div class="drop-zone" id="dropZone"
+         onclick="document.getElementById('fileIn').click()"
+         ondragover="dzOver(event)" ondragleave="dzLeave(event)" ondrop="dzDrop(event)">
+      <div class="dz-big">📂</div>
+      <div class="dz-main">Drop file here or click to browse</div>
+      <div class="dz-hint">PDF, DOCX, DOC — up to 20 MB</div>
+      <input type="file" id="fileIn" accept=".pdf,.doc,.docx" style="display:none" onchange="fileSelected(event)" />
+    </div>
+    <div class="file-chip hidden" id="fileChip">
+      <span style="font-size:20px;">📄</span>
+      <div class="file-chip-name" id="chipName"></div>
+      <div class="file-chip-size" id="chipSize"></div>
+    </div>
+    <div class="mf-row">
+      <label class="mf-label">Document Title</label>
+      <input class="mf-input" type="text" id="upTitle" placeholder="e.g. Term Sheet v2" />
+    </div>
+    <div class="mf-row">
+      <label class="mf-label">Category</label>
+      <select class="mf-select" id="upCat">
+        <option value="contract">Contract</option>
+        <option value="nda">NDA</option>
+        <option value="term-sheet">Term Sheet</option>
+        <option value="pitch-deck">Pitch Deck</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="df-btn" onclick="closeUpload()">Cancel</button>
+      <button class="df-btn teal" onclick="confirmUpload()">Upload Document</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEMPLATE MODAL -->
+<div class="modal-bg" id="tplModal">
+  <div class="modal-box">
+    <button class="modal-close-btn" onclick="closeTpl()">✕</button>
+    <div class="modal-title">New from Template</div>
+    <div class="tpl-grid">
+      <div class="tpl-card" onclick="createTpl('NDA Agreement','🤝','nda')"><div class="tpl-em">🤝</div><div class="tpl-nm">NDA Agreement</div></div>
+      <div class="tpl-card" onclick="createTpl('Term Sheet','📋','term-sheet')"><div class="tpl-em">📋</div><div class="tpl-nm">Term Sheet</div></div>
+      <div class="tpl-card" onclick="createTpl('Investment Contract','💼','contract')"><div class="tpl-em">💼</div><div class="tpl-nm">Investment Contract</div></div>
+      <div class="tpl-card" onclick="createTpl('Shareholder Agreement','👥','contract')"><div class="tpl-em">👥</div><div class="tpl-nm">Shareholder Agreement</div></div>
+      <div class="tpl-card" onclick="createTpl('Due Diligence Checklist','✅','other')"><div class="tpl-em">✅</div><div class="tpl-nm">Due Diligence</div></div>
+      <div class="tpl-card" onclick="createTpl('Blank Document','📄','other')"><div class="tpl-em">📄</div><div class="tpl-nm">Blank Document</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+/* Helpers */
+function uid() { return Math.random().toString(36).slice(2,9); }
+function toast(msg, type='i') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+
+/* Data */
+let docs = [
+  { id:uid(), title:'Series A Term Sheet',        cat:'term-sheet', status:'signed', size:'248 KB', pages:8,  date:'2026-02-10', owner:'Sarah Chen',   icon:'📋', type:'PDF' },
+  { id:uid(), title:'NDA — Nexus Platform',        cat:'nda',        status:'signed', size:'124 KB', pages:4,  date:'2026-02-08', owner:'Marcus Webb',   icon:'🤝', type:'PDF' },
+  { id:uid(), title:'Investment Contract v2',      cat:'contract',   status:'review', size:'512 KB', pages:22, date:'2026-02-15', owner:'Jennifer Park', icon:'💼', type:'DOCX' },
+  { id:uid(), title:'Shareholder Agreement Draft', cat:'contract',   status:'draft',  size:'340 KB', pages:14, date:'2026-02-18', owner:'You',           icon:'👥', type:'DOCX' },
+  { id:uid(), title:'Due Diligence Checklist',     cat:'other',      status:'review', size:'92 KB',  pages:6,  date:'2026-02-17', owner:'David Kim',     icon:'✅', type:'PDF' },
+  { id:uid(), title:'Pitch Deck — Q1 2026',        cat:'pitch-deck', status:'draft',  size:'4.2 MB', pages:18, date:'2026-02-19', owner:'You',           icon:'📊', type:'PDF' },
+];
+
+let filter    = 'all';
+let activeId  = null;
+let sigCtx, isDrawing = false;
+
+/* Render Table */
+function renderTable() {
+  const q    = document.getElementById('searchIn').value.toLowerCase();
+  const tbody = document.getElementById('docTableBody');
+  const list  = docs.filter(d =>
+    (filter === 'all' || d.status === filter) &&
+    (!q || d.title.toLowerCase().includes(q) || d.owner.toLowerCase().includes(q))
+  );
+
+  tbody.innerHTML = '';
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-row" style="text-align:center;padding:60px;color:var(--ink3);font-size:14px;">No documents found</td></tr>`;
+    return;
+  }
+
+  list.forEach(d => {
+    const tr = document.createElement('tr');
+    const statusMap = {
+      draft:  `<span class="status-pill sp-draft"><span class="sp-dot"></span>Draft</span>`,
+      review: `<span class="status-pill sp-review"><span class="sp-dot"></span>In Review</span>`,
+      signed: `<span class="status-pill sp-signed"><span class="sp-dot"></span>Signed</span>`,
+    };
+    tr.innerHTML = `
+      <td onclick="openDrawer('${d.id}')">
+        <div class="td-name">
+          <div class="doc-file-icon">${d.icon}</div>
+          <div>
+            <div class="doc-name-text">${d.title}</div>
+            <div class="doc-name-sub">${d.type} · ${d.pages} pages</div>
+          </div>
+        </div>
+      </td>
+      <td onclick="openDrawer('${d.id}')">${statusMap[d.status]}</td>
+      <td onclick="openDrawer('${d.id}')" style="color:var(--ink3);font-size:12px;">${d.date}</td>
+      <td onclick="openDrawer('${d.id}')" style="color:var(--ink3);font-size:12px;">${d.size}</td>
+      <td onclick="openDrawer('${d.id}')" style="font-size:12px;">${d.owner}</td>
+      <td>
+        <div class="td-actions">
+          <button class="tbl-btn" onclick="openDrawer('${d.id}')">Preview</button>
+          ${d.status !== 'signed' ? `<button class="tbl-btn primary" onclick="quickSign('${d.id}')">Sign</button>` : ''}
+          <button class="tbl-btn" onclick="deleteById('${d.id}')">✕</button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+/* Stats */
+function updateStats() {
+  const total  = docs.length;
+  const draft  = docs.filter(d => d.status === 'draft').length;
+  const review = docs.filter(d => d.status === 'review').length;
+  const signed = docs.filter(d => d.status === 'signed').length;
+
+  ['sTotal','sDraft','sReview','sSigned'].forEach((id, i) => {
+    document.getElementById(id).textContent = [total,draft,review,signed][i];
+  });
+  ['cntAll','cntDraft','cntReview','cntSigned'].forEach((id, i) => {
+    document.getElementById(id).textContent = [total,draft,review,signed][i];
+  });
+  ['tb-all','tb-draft','tb-review','tb-signed'].forEach((id, i) => {
+    document.getElementById(id).textContent = [total,draft,review,signed][i];
+  });
+}
+
+function render() { updateStats(); renderTable(); }
+
+/* Filters */
+function setFilter(f, el) {
+  filter = f;
+  document.querySelectorAll('.ln-item').forEach(x => x.classList.remove('active'));
+  el.classList.add('active');
+  renderTable();
+}
+function setTabFilter(f, el) {
+  filter = f;
+  document.querySelectorAll('.sb-tab').forEach(x => x.classList.remove('active'));
+  el.classList.add('active');
+  renderTable();
+}
+
+/* Drawer */
+function openDrawer(id) {
+  activeId = id;
+  const d = docs.find(x => x.id === id);
+  if (!d) return;
+
+  document.getElementById('drawerTitle').textContent = `${d.icon} ${d.title}`;
+  document.getElementById('drawerMeta').textContent  = `${d.type} · ${d.pages} pages · ${d.size} · ${d.owner}`;
+  document.getElementById('drawerDate').textContent  = d.date;
+
+  // Stamp
+  const stamps = { draft:'DRAFT', review:'REVIEW', signed:'SIGNED ✓' };
+  document.getElementById('docStamp').textContent = stamps[d.status] || '';
+
+  // Stepper
+  const steps = ['draft','review','signed'];
+  const idx   = steps.indexOf(d.status);
+  steps.forEach((s,i) => {
+    const el = document.getElementById(`stp-${s}`);
+    el.classList.remove('active','done');
+    if (i < idx)       el.classList.add('done');
+    else if (i === idx) el.classList.add('active');
+  });
+  document.getElementById('bar1').classList.toggle('done', idx >= 1);
+  document.getElementById('bar2').classList.toggle('done', idx >= 2);
+
+  // Sig section — hide if already signed
+  const sigSec = document.getElementById('sigSection');
+  sigSec.style.display = d.status === 'signed' ? 'none' : 'block';
+
+  // Footer buttons
+  document.getElementById('reviewBtn').style.display = d.status === 'draft'  ? '' : 'none';
+  document.getElementById('shareBtn').style.display  = d.status === 'signed' ? '' : 'none';
+
+  // Init sig canvas
+  if (d.status !== 'signed') initSig();
+
+  document.getElementById('drawerBg').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+}
+
+function closeDrawer() {
+  document.getElementById('drawerBg').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+  activeId = null;
+}
+
+/* Signature Pad */
+function initSig() {
+  const canvas = document.getElementById('sigCanvas');
+  sigCtx = canvas.getContext('2d');
+  sigCtx.clearRect(0, 0, canvas.width, canvas.height);
+  document.getElementById('sigPh').style.opacity = '1';
+
+  canvas.onmousedown  = e => { isDrawing=true; document.getElementById('sigPh').style.opacity='0'; const p=pos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); sigCtx.strokeStyle=var_ink(); sigCtx.lineWidth=2.2; sigCtx.lineCap='round'; sigCtx.lineJoin='round'; };
+  canvas.onmousemove  = e => { if(!isDrawing) return; const p=pos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); };
+  canvas.onmouseup    = () => isDrawing=false;
+  canvas.onmouseleave = () => isDrawing=false;
+  canvas.ontouchstart = e => { e.preventDefault(); canvas.onmousedown(e.touches[0]); };
+  canvas.ontouchmove  = e => { e.preventDefault(); canvas.onmousemove(e.touches[0]); };
+  canvas.ontouchend   = () => isDrawing=false;
+}
+
+function var_ink() { return '#1a1814'; }
+function pos(e) {
+  const r = document.getElementById('sigCanvas').getBoundingClientRect();
+  const c = document.getElementById('sigCanvas');
+  return { x:(e.clientX-r.left)*(c.width/r.width), y:(e.clientY-r.top)*(c.height/r.height) };
+}
+
+function clearSig() {
+  const c = document.getElementById('sigCanvas');
+  sigCtx.clearRect(0,0,c.width,c.height);
+  document.getElementById('sigPh').style.opacity = '1';
+}
+
+function signDoc() {
+  if (!activeId) return;
+  const c = document.getElementById('sigCanvas');
+  const pixels = sigCtx.getImageData(0,0,c.width,c.height).data;
+  if (!pixels.some(p => p !== 0)) { toast('✍️ Please draw your signature first','w'); return; }
+
+  const d = docs.find(x => x.id === activeId);
+  if (d) { d.status = 'signed'; render(); closeDrawer(); toast(`✅ "${d.title}" signed successfully!`,'s'); }
+}
+
+function quickSign(id) {
+  activeId = id;
+  openDrawer(id);
+  toast('✍️ Draw your signature in the panel','i');
+}
+
+/* Actions */
+function downloadDoc() { const d=docs.find(x=>x.id===activeId); toast(`⬇ Downloading "${d?.title}"…`,'i'); }
+function sendReview()  { const d=docs.find(x=>x.id===activeId); if(d){d.status='review'; render(); closeDrawer(); toast('🔍 Sent for review','i');} }
+function shareDoc()    { toast('🔗 Secure link copied to clipboard!','s'); }
+function deleteById(id){ const d=docs.find(x=>x.id===id); docs=docs.filter(x=>x.id!==id); render(); if(activeId===id)closeDrawer(); toast(`🗑 "${d?.title}" deleted`,'w'); }
+function deleteDoc()   { if(activeId) deleteById(activeId); }
+
+/* Upload */
+function openUpload()  { document.getElementById('uploadModal').classList.add('open'); }
+function closeUpload() { document.getElementById('uploadModal').classList.remove('open'); document.getElementById('fileChip').classList.add('hidden'); document.getElementById('upTitle').value=''; }
+
+function dzOver(e)  { e.preventDefault(); document.getElementById('dropZone').classList.add('over'); }
+function dzLeave(e) { document.getElementById('dropZone').classList.remove('over'); }
+function dzDrop(e)  { e.preventDefault(); dzLeave(e); const f=e.dataTransfer.files[0]; if(f)showChip(f); }
+function fileSelected(e) { const f=e.target.files[0]; if(f)showChip(f); }
+function showChip(f) {
+  document.getElementById('chipName').textContent = f.name;
+  document.getElementById('chipSize').textContent = f.size>1048576 ? `${(f.size/1048576).toFixed(1)} MB` : `${Math.round(f.size/1024)} KB`;
+  document.getElementById('fileChip').classList.remove('hidden');
+  document.getElementById('upTitle').value = f.name.replace(/\.[^.]+$/,'');
+}
+function confirmUpload() {
+  const title = document.getElementById('upTitle').value.trim();
+  if (!title) { toast('📝 Enter a document title','w'); return; }
+  const catMap = { contract:'💼', nda:'🤝', 'term-sheet':'📋', 'pitch-deck':'📊', other:'📄' };
+  const cat = document.getElementById('upCat').value;
+  docs.unshift({ id:uid(), title, cat, status:'draft', size:document.getElementById('chipSize').textContent||'—', pages:Math.floor(Math.random()*20)+1, date:new Date().toISOString().split('T')[0], owner:'You', icon:catMap[cat]||'📄', type:'PDF' });
+  render(); closeUpload(); toast(`📄 "${title}" uploaded`,'s');
+}
+
+/* Templates */
+function openTemplates() { document.getElementById('tplModal').classList.add('open'); }
+function closeTpl()      { document.getElementById('tplModal').classList.remove('open'); }
+function createTpl(name, icon, cat) {
+  const title = `${name} — ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})}`;
+  docs.unshift({ id:uid(), title, cat, status:'draft', size:'—', pages:1, date:new Date().toISOString().split('T')[0], owner:'You', icon, type:'DOCX' });
+  render(); closeTpl(); toast(`📝 "${name}" created`,'s');
+}
+
+/* Modal close on bg click */
+document.getElementById('uploadModal').addEventListener('click', e => { if(e.target===document.getElementById('uploadModal')) closeUpload(); });
+document.getElementById('tplModal').addEventListener('click',   e => { if(e.target===document.getElementById('tplModal'))   closeTpl();    });
+
+/* Init */
+render();
+</script>
+</body>
+</html>

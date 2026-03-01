@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Nexus — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf9f6;--s1:#f3f1ec;--s2:#eae7df;--s3:#e0dcd2;
+  --ink:#1c1a16;--ink2:#35322a;--muted:#8a8575;--line:rgba(28,26,22,.1);--line2:rgba(28,26,22,.18);
+  --gold:#c8862a;--teal:#0a6e62;--rose:#b83a3a;--blue:#2a5fc8;--sage:#4a7a52;
+  --fh:'Fraunces',serif;--fb:'DM Sans',sans-serif;
+  --r:10px;--r2:16px;
+}
+html{font-size:16px}
+body{font-family:var(--fb);background:var(--bg);color:var(--ink);min-height:100vh;line-height:1.5}
+
+/* HEADER */
+.header{background:var(--ink);padding:0 36px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.hd-brand{font-family:var(--fh);font-size:22px;font-weight:900;color:#fff;letter-spacing:-0.5px}
+.hd-brand em{color:var(--gold);font-style:italic}
+.hd-nav{display:flex;gap:2px}
+.hn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;font-family:var(--fb);color:rgba(255,255,255,.5);background:none;border:none;cursor:pointer;transition:all .15s}
+.hn:hover{color:#fff;background:rgba(255,255,255,.08)}
+.hn.active{color:var(--gold);background:rgba(200,134,42,.12)}
+.hd-right{display:flex;align-items:center;gap:14px}
+.hd-av{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--gold),#e0963a);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;font-family:var(--fh)}
+.hd-info{}
+.hd-name{font-size:13px;font-weight:600;color:#fff}
+.hd-role{font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.5px;text-transform:uppercase}
+
+/* HERO SECTION */
+.hero{background:var(--ink);padding:36px 36px 48px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:0;right:0;width:400px;height:100%;background:linear-gradient(135deg,transparent,rgba(200,134,42,.06));pointer-events:none}
+.hero-inner{max-width:1200px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:20px}
+.hero-greeting{}
+.hero-time{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:8px;font-family:var(--fb)}
+.hero-h{font-family:var(--fh);font-size:38px;font-weight:900;color:#fff;line-height:1.1;margin-bottom:6px}
+.hero-h em{color:var(--gold);font-style:italic}
+.hero-sub{font-size:14px;color:rgba(255,255,255,.45);max-width:420px}
+.hero-stats{display:flex;gap:24px;flex-wrap:wrap}
+.hs-item{text-align:right}
+.hs-val{font-family:var(--fh);font-size:26px;font-weight:700;color:#fff;line-height:1}
+.hs-lbl{font-size:11px;color:rgba(255,255,255,.35);letter-spacing:.5px;text-transform:uppercase;margin-top:2px}
+
+/* WAVE DIVIDER */
+.wave-wrap{background:var(--ink);line-height:0;margin-bottom:-1px}
+.wave-wrap svg{display:block;width:100%}
+
+/* BODY */
+.body{max-width:1200px;margin:0 auto;padding:32px 36px 60px}
+
+/* MODULE GRID */
+.modules{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
+
+.module{background:var(--s1);border:1.5px solid var(--line);border-radius:var(--r2);padding:0;overflow:hidden;transition:all .25s;cursor:pointer;text-decoration:none;color:inherit;display:flex;flex-direction:column;position:relative}
+.module:hover{border-color:var(--line2);transform:translateY(-3px);box-shadow:0 10px 40px rgba(28,26,22,.1)}
+
+.module-thumb{height:130px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;flex-shrink:0}
+.module-thumb .big-icon{font-size:52px;position:relative;z-index:1;filter:drop-shadow(0 4px 16px rgba(0,0,0,.2));transition:transform .3s}
+.module:hover .big-icon{transform:scale(1.1) translateY(-4px)}
+
+/* individual thumb backgrounds */
+.module.calendar .module-thumb{background:linear-gradient(135deg,#0d2a4a,#0f3460)}
+.module.video    .module-thumb{background:linear-gradient(135deg,#0a1a10,#0c2b1a)}
+.module.docs     .module-thumb{background:linear-gradient(135deg,#2a1a0a,#3d2510)}
+.module.payments .module-thumb{background:linear-gradient(135deg,#08080d,#12121f)}
+.module.security .module-thumb{background:linear-gradient(135deg,#1a0a0a,#2d0f0f)}
+
+/* mini preview elements inside thumbs */
+.module-thumb-deco{position:absolute;inset:0;opacity:.3}
+.cal-grid-mini{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:12px;position:absolute;bottom:0;left:0;right:0}
+.cal-cell{height:10px;border-radius:2px;background:rgba(255,255,255,.15)}
+.cal-cell.has{background:rgba(77,158,255,.6)}
+.cal-cell.today{background:#fff}
+
+.module-body{padding:20px;flex:1;display:flex;flex-direction:column}
+.module-name{font-family:var(--fh);font-size:18px;font-weight:700;margin-bottom:4px}
+.module-desc{font-size:12px;color:var(--muted);line-height:1.5;flex:1}
+.module-meta{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.module-stat{font-size:12px;color:var(--muted)}
+.module-stat strong{color:var(--ink);font-weight:700}
+.module-arrow{width:28px;height:28px;border-radius:8px;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .2s}
+.module:hover .module-arrow{background:var(--ink);color:#fff}
+
+/* notification dot */
+.mod-notif{position:absolute;top:12px;right:12px;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;z-index:5}
+.mod-notif.red{background:var(--rose)}
+.mod-notif.gold{background:var(--gold)}
+
+/* RECENT ACTIVITY + RIGHT PANELS */
+.bottom-grid{display:grid;grid-template-columns:1fr 320px;gap:16px}
+
+/* Timeline */
+.timeline-card{background:var(--s1);border:1.5px solid var(--line);border-radius:var(--r2);overflow:hidden}
+.tc-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.tc-title{font-family:var(--fh);font-size:16px;font-weight:700}
+.tc-filter{display:flex;gap:4px}
+.tcf{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;color:var(--muted);background:none;border:1px solid var(--line);cursor:pointer;font-family:var(--fb);transition:all .15s}
+.tcf:hover{border-color:var(--line2);color:var(--ink)}
+.tcf.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tc-body{padding:6px 22px 16px}
+
+.tl-item{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);position:relative}
+.tl-item:last-child{border-bottom:none}
+.tl-line{position:absolute;left:15px;top:36px;bottom:-14px;width:1.5px;background:var(--line)}
+.tl-item:last-child .tl-line{display:none}
+.tl-dot-wrap{flex-shrink:0;position:relative;z-index:1}
+.tl-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;border:2px solid var(--bg)}
+.tl-dot.cal{background:linear-gradient(135deg,#0d2a4a,#0f3460)}
+.tl-dot.pay{background:linear-gradient(135deg,#08080d,#12121f)}
+.tl-dot.doc{background:linear-gradient(135deg,#2a1a0a,#3d2510)}
+.tl-dot.vid{background:linear-gradient(135deg,#0a1a10,#0c2b1a)}
+.tl-dot.sec{background:linear-gradient(135deg,#1a0a0a,#2d0f0f)}
+.tl-content{flex:1}
+.tl-action{font-size:13px;font-weight:600;color:var(--ink)}
+.tl-detail{font-size:12px;color:var(--muted);margin-top:2px}
+.tl-time{font-size:11px;color:var(--muted);flex-shrink:0;white-space:nowrap}
+
+/* Right side stack */
+.right-stack{display:flex;flex-direction:column;gap:14px}
+
+/* Week progress */
+.progress-card{background:var(--s1);border:1.5px solid var(--line);border-radius:var(--r2);padding:22px}
+.pc-title{font-family:var(--fh);font-size:15px;font-weight:700;margin-bottom:16px}
+.week-progress{display:flex;flex-direction:column;gap:12px}
+.wp-item{display:flex;flex-direction:column;gap:5px}
+.wp-top{display:flex;align-items:center;justify-content:space-between;font-size:12px}
+.wp-label{font-weight:600;color:var(--ink2)}
+.wp-pct{color:var(--muted);font-weight:600}
+.wp-bar-track{height:6px;background:var(--s3);border-radius:3px;overflow:hidden}
+.wp-bar-fill{height:100%;border-radius:3px;transition:width .6s cubic-bezier(.25,.46,.45,.94)}
+
+/* Quick links */
+.quick-links{background:var(--s1);border:1.5px solid var(--line);border-radius:var(--r2);padding:22px}
+.ql-title{font-family:var(--fh);font-size:15px;font-weight:700;margin-bottom:14px}
+.ql-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ql-btn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 10px;border-radius:var(--r);background:var(--s2);border:1.5px solid var(--line);cursor:pointer;transition:all .2s;text-decoration:none;color:inherit}
+.ql-btn:hover{background:var(--ink);color:#fff;border-color:var(--ink);transform:scale(1.03)}
+.ql-icon{font-size:22px}
+.ql-label{font-size:11px;font-weight:600;text-align:center}
+
+/* WALKTHROUGH TOOLTIP SYSTEM */
+.wt-overlay{
+  position:fixed;inset:0;background:rgba(28,26,22,.55);
+  z-index:200;pointer-events:none;transition:opacity .3s;
+}
+.wt-overlay.hidden{opacity:0;pointer-events:none}
+.wt-overlay.visible{opacity:1;pointer-events:none}
+
+/* Spotlight cut-out */
+.wt-spotlight{
+  position:fixed;z-index:201;
+  border-radius:14px;
+  box-shadow:0 0 0 9999px rgba(28,26,22,.6);
+  pointer-events:none;
+  transition:all .35s cubic-bezier(.25,.46,.45,.94);
+}
+
+/* Tooltip bubble */
+.wt-tooltip{
+  position:fixed;z-index:202;
+  background:#fff;
+  border-radius:16px;
+  padding:22px 24px;
+  width:300px;
+  box-shadow:0 20px 60px rgba(28,26,22,.2),0 0 0 1.5px rgba(28,26,22,.08);
+  transition:all .35s cubic-bezier(.25,.46,.45,.94);
+  pointer-events:all;
+}
+.wt-tooltip::before{
+  content:'';position:absolute;width:14px;height:14px;background:#fff;
+  transform:rotate(45deg);box-shadow:-1px -1px 0 rgba(28,26,22,.08);
+}
+.wt-tooltip.arrow-top::before{bottom:-7px;left:50%;margin-left:-7px;box-shadow:1px 1px 0 rgba(28,26,22,.08)}
+.wt-tooltip.arrow-bottom::before{top:-7px;left:50%;margin-left:-7px}
+.wt-tooltip.arrow-left::before{right:-7px;top:28px;box-shadow:1px -1px 0 rgba(28,26,22,.08)}
+.wt-tooltip.arrow-right::before{left:-7px;top:28px;box-shadow:-1px 1px 0 rgba(28,26,22,.08)}
+
+.wt-step-badge{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:8px;font-family:var(--fb)}
+.wt-title{font-family:var(--fh);font-size:18px;font-weight:700;margin-bottom:6px;color:var(--ink)}
+.wt-body{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:18px}
+.wt-footer{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.wt-dots{display:flex;gap:5px}
+.wt-dot{width:7px;height:7px;border-radius:50%;background:var(--s3);transition:background .2s}
+.wt-dot.active{background:var(--gold)}
+.wt-btns{display:flex;gap:8px}
+.wt-btn{padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:var(--fb);transition:all .15s}
+.wt-skip{background:none;color:var(--muted);border:1.5px solid var(--line2) !important;padding:8px 12px}
+.wt-skip:hover{color:var(--ink);border-color:var(--ink) !important}
+.wt-next{background:var(--ink);color:#fff}
+.wt-next:hover{background:var(--ink2)}
+
+/* Tour launcher */
+.tour-bar{background:linear-gradient(135deg,var(--ink),#2a2820);border-radius:var(--r2);padding:18px 22px;margin-bottom:24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.tour-icon{font-size:28px;flex-shrink:0}
+.tour-text{flex:1}
+.tour-heading{font-family:var(--fh);font-size:16px;font-weight:700;color:#fff;margin-bottom:2px}
+.tour-sub{font-size:12px;color:rgba(255,255,255,.45)}
+.tour-start-btn{background:var(--gold);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-family:var(--fb);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;flex-shrink:0}
+.tour-start-btn:hover{background:#b07320;transform:scale(1.03)}
+.tour-dismiss{background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;font-size:18px;flex-shrink:0;padding:4px}
+.tour-dismiss:hover{color:#fff}
+
+/* Toast */
+.toasts{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--ink);color:#fff;border-radius:10px;padding:11px 16px;font-size:13px;display:flex;align-items:center;gap:8px;box-shadow:0 8px 32px rgba(0,0,0,.2);animation:ti .3s ease;max-width:280px}
+@keyframes ti{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+.toast.s{border-left:3px solid var(--sage)}
+.toast.i{border-left:3px solid var(--gold)}
+
+/* Responsive */
+@media(max-width:1000px){.modules{grid-template-columns:1fr 1fr}.bottom-grid{grid-template-columns:1fr}.right-stack{flex-direction:row;flex-wrap:wrap}.right-stack>*{flex:1;min-width:250px}}
+@media(max-width:650px){.modules{grid-template-columns:1fr}.header{padding:0 16px}.body{padding:20px 16px 40px}.hd-nav{display:none}.hero{padding:24px 16px 36px}.hero-h{font-size:28px}}
+</style>
+
+<style id="nx-nav-style">
+/* NEXUS SHARED TOPNAV */
+.nx-topnav{
+  position:fixed;top:0;left:0;right:0;z-index:9999;
+  background:#0a0c12;
+  border-bottom:1px solid rgba(255,255,255,0.07);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;height:52px;
+  font-family:'DM Sans','Outfit',sans-serif;
+}
+.nx-brand{
+  font-size:15px;font-weight:800;letter-spacing:3px;
+  color:#00e5a0;cursor:pointer;flex-shrink:0;
+}
+.nx-links{display:flex;gap:2px;}
+.nx-link{
+  display:flex;align-items:center;gap:5px;
+  padding:6px 12px;border-radius:8px;
+  font-size:12px;font-weight:500;
+  text-decoration:none;color:rgba(255,255,255,0.45);
+  transition:all .15s;white-space:nowrap;
+}
+.nx-link:hover{color:#fff;background:rgba(255,255,255,0.07);}
+.nx-link.active{color:#00e5a0;background:rgba(0,229,160,0.1);}
+.nx-ham{
+  display:none;background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.1);border-radius:7px;
+  color:#fff;font-size:16px;padding:5px 9px;cursor:pointer;
+}
+/* Push page content down */
+body > *:not(.nx-topnav){margin-top:0}
+.main,.page,.lobby-body,.hero,.topbar,.topnav,.shell,.page-wrapper{
+  padding-top:0 !important;
+}
+/* Hide original navbars once we inject ours */
+.sidebar,.topbar,.topnav,.header,.call-header+.video-stage,.topbar+*{
+/* don't hide — just override top offset */
+}
+@media(max-width:700px){
+  .nx-links{
+    display:none;flex-direction:column;
+    position:fixed;top:52px;left:0;right:0;
+    background:#0a0c12;border-bottom:1px solid rgba(255,255,255,0.1);
+    padding:8px 0;z-index:9998;
+  }
+  .nx-links.open{display:flex;}
+  .nx-link{padding:10px 20px;border-radius:0;font-size:13px;}
+  .nx-ham{display:block;}
+}
+</style>
+
+<style id="nx-body-offset">
+  /* Offset page body below fixed topnav (52px) */
+  body { padding-top: 52px !important; }
+  /* Calendar has its own sidebar layout — fix its main content */
+  .main { padding-top: 0 !important; }
+  /* video call screen takes full height - handle it */
+  #callScreen { padding-top: 0 !important; }
+  #lobby { padding-top: 0 !important; }
+</style>
+</head>
+<body>
+<nav class="nx-topnav" id="nxTopnav">
+  <div class="nx-brand" onclick="location.href='dashboard.html'">NEXUS</div>
+  <div class="nx-links" id="nxLinks">
+    <a class="nx-link active" href="dashboard.html">⊞ Dashboard</a>
+    <a class="nx-link" href="calendar.html">📅 Calendar</a>
+    <a class="nx-link" href="video-call.html">🎥 Video</a>
+    <a class="nx-link" href="documents.html">📁 Docs</a>
+    <a class="nx-link" href="payments.html">💳 Payments</a>
+    <a class="nx-link" href="security.html">🔐 Security</a>
+  </div>
+  <button class="nx-ham" id="nxHam" onclick="document.getElementById('nxLinks').classList.toggle('open')">☰</button>
+</nav>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="hd-brand">NEX<em>US</em></div>
+  <div class="hd-nav">
+    <button class="hn active">Dashboard</button>
+    <button class="hn" onclick="go('video-call.html')">Video Calls</button>
+    <button class="hn" onclick="go('documents.html')">Documents</button>
+    <button class="hn" onclick="go('payments.html')">Payments</button>
+    <button class="hn" onclick="go('security.html')">Security</button>
+  </div>
+  <div class="hd-right">
+    <div class="hd-av">A</div>
+    <div class="hd-info">
+      <div class="hd-name">Abdul Raqeeb</div>
+      <div class="hd-role">Entrepreneur</div>
+    </div>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-greeting">
+      <div class="hero-time" id="heroTime">Good morning</div>
+      <h1 class="hero-h">Welcome back,<br/><em>Abdul Raqeeb</em></h1>
+      <div class="hero-sub">Here's an overview of your platform activity across all modules.</div>
+    </div>
+    <div class="hero-stats" id="heroStats">
+      <div class="hs-item"><div class="hs-val">3</div><div class="hs-lbl">Pending Calls</div></div>
+      <div class="hs-item"><div class="hs-val">2</div><div class="hs-lbl">Docs to Sign</div></div>
+      <div class="hs-item"><div class="hs-val">$48k</div><div class="hs-lbl">Balance</div></div>
+      <div class="hs-item"><div class="hs-val">78</div><div class="hs-lbl">Security Score</div></div>
+    </div>
+  </div>
+</div>
+<div class="wave-wrap">
+  <svg viewBox="0 0 1440 32" preserveAspectRatio="none" height="32"><path d="M0,16 C360,32 1080,0 1440,16 L1440,32 L0,32 Z" fill="#faf9f6"/></svg>
+</div>
+
+<!-- BODY -->
+<div class="body">
+
+  <!-- TOUR BAR -->
+  <div class="tour-bar" id="tourBar">
+    <div class="tour-icon">🗺️</div>
+    <div class="tour-text">
+      <div class="tour-heading">New here? Take the guided tour</div>
+      <div class="tour-sub">5 steps · 2 min · Learn what each module does</div>
+    </div>
+    <button class="tour-start-btn" onclick="startTour()">Start Tour →</button>
+    <button class="tour-dismiss" onclick="dismissTour()" title="Dismiss">✕</button>
+  </div>
+
+  <!-- MODULE CARDS -->
+  <div class="modules" id="modulesGrid">
+
+    <a class="module calendar" id="mod-calendar" onclick="go('calendar.html')">
+      <div class="module-thumb">
+        <div class="big-icon">📅</div>
+        <div class="module-thumb-deco">
+          <div class="cal-grid-mini">
+            <div class="cal-cell"></div><div class="cal-cell has"></div><div class="cal-cell"></div><div class="cal-cell has"></div><div class="cal-cell"></div><div class="cal-cell today"></div><div class="cal-cell"></div>
+            <div class="cal-cell has"></div><div class="cal-cell"></div><div class="cal-cell has"></div><div class="cal-cell"></div><div class="cal-cell"></div><div class="cal-cell has"></div><div class="cal-cell"></div>
+          </div>
+        </div>
+        <div class="mod-notif gold">2</div>
+      </div>
+      <div class="module-body">
+        <div class="module-name">Meeting Calendar</div>
+        <div class="module-desc">Schedule and manage investor meetings. Accept or decline requests. View your availability slots.</div>
+        <div class="module-meta">
+          <div class="module-stat"><strong>2</strong> meetings today</div>
+          <div class="module-arrow">→</div>
+        </div>
+      </div>
+    </a>
+
+    <a class="module video" id="mod-video" onclick="go('video-call.html')">
+      <div class="module-thumb">
+        <div class="big-icon">🎥</div>
+      </div>
+      <div class="module-body">
+        <div class="module-name">Video Calls</div>
+        <div class="module-desc">Join live investor calls, share your screen, chat in real-time, and manage your scheduled sessions.</div>
+        <div class="module-meta">
+          <div class="module-stat"><strong>1</strong> live right now</div>
+          <div class="module-arrow">→</div>
+        </div>
+      </div>
+    </a>
+
+    <a class="module docs" id="mod-docs" onclick="go('documents.html')">
+      <div class="module-thumb">
+        <div class="big-icon">📁</div>
+        <div class="mod-notif red">2</div>
+      </div>
+      <div class="module-body">
+        <div class="module-name">Document Chamber</div>
+        <div class="module-desc">Upload, e-sign, and track legal documents. Contracts, NDAs, term sheets — all in one secure vault.</div>
+        <div class="module-meta">
+          <div class="module-stat"><strong>2</strong> awaiting signature</div>
+          <div class="module-arrow">→</div>
+        </div>
+      </div>
+    </a>
+
+    <a class="module payments" id="mod-payments" onclick="go('payments.html')">
+      <div class="module-thumb">
+        <div class="big-icon">💳</div>
+      </div>
+      <div class="module-body">
+        <div class="module-name">Payments</div>
+        <div class="module-desc">Send and receive funds, track transactions, fund deals, and view your complete financial history.</div>
+        <div class="module-meta">
+          <div class="module-stat"><strong>$48,250</strong> balance</div>
+          <div class="module-arrow">→</div>
+        </div>
+      </div>
+    </a>
+
+    <a class="module security" id="mod-security" onclick="go('security.html')">
+      <div class="module-thumb">
+        <div class="big-icon">🔐</div>
+        <div class="mod-notif gold">!</div>
+      </div>
+      <div class="module-body">
+        <div class="module-name">Security Center</div>
+        <div class="module-desc">Set password strength, enable 2FA, manage sessions, review activity logs, and control role permissions.</div>
+        <div class="module-meta">
+          <div class="module-stat">Score: <strong>78/100</strong></div>
+          <div class="module-arrow">→</div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <!-- BOTTOM ROW -->
+  <div class="bottom-grid">
+
+    <!-- TIMELINE -->
+    <div class="timeline-card" id="timelineCard">
+      <div class="tc-head">
+        <div class="tc-title">Recent Activity</div>
+        <div class="tc-filter">
+          <button class="tcf active" onclick="filterTl('all',this)">All</button>
+          <button class="tcf" onclick="filterTl('meetings',this)">Meetings</button>
+          <button class="tcf" onclick="filterTl('payments',this)">Payments</button>
+          <button class="tcf" onclick="filterTl('docs',this)">Docs</button>
+        </div>
+      </div>
+      <div class="tc-body" id="tlBody"></div>
+    </div>
+
+    <!-- RIGHT STACK -->
+    <div class="right-stack">
+
+      <!-- Week progress -->
+      <div class="progress-card" id="progressCard">
+        <div class="pc-title">Week 3 Progress</div>
+        <div class="week-progress">
+          <div class="wp-item">
+            <div class="wp-top"><span class="wp-label">📅 Calendar</span><span class="wp-pct">100%</span></div>
+            <div class="wp-bar-track"><div class="wp-bar-fill" style="width:100%;background:var(--blue)"></div></div>
+          </div>
+          <div class="wp-item">
+            <div class="wp-top"><span class="wp-label">🎥 Video Calls</span><span class="wp-pct">100%</span></div>
+            <div class="wp-bar-track"><div class="wp-bar-fill" style="width:100%;background:var(--teal)"></div></div>
+          </div>
+          <div class="wp-item">
+            <div class="wp-top"><span class="wp-label">📁 Documents</span><span class="wp-pct">100%</span></div>
+            <div class="wp-bar-track"><div class="wp-bar-fill" style="width:100%;background:var(--gold)"></div></div>
+          </div>
+          <div class="wp-item">
+            <div class="wp-top"><span class="wp-label">💳 Payments</span><span class="wp-pct">100%</span></div>
+            <div class="wp-bar-track"><div class="wp-bar-fill" style="width:100%;background:var(--sage)"></div></div>
+          </div>
+          <div class="wp-item">
+            <div class="wp-top"><span class="wp-label">🔐 Security</span><span class="wp-pct">100%</span></div>
+            <div class="wp-bar-track"><div class="wp-bar-fill" style="width:100%;background:var(--rose)"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick links -->
+      <div class="quick-links">
+        <div class="ql-title">Quick Actions</div>
+        <div class="ql-grid">
+          <a class="ql-btn" onclick="go('calendar.html')"><div class="ql-icon">📅</div><div class="ql-label">Schedule Call</div></a>
+          <a class="ql-btn" onclick="go('video-call.html')"><div class="ql-icon">🎥</div><div class="ql-label">Join Call</div></a>
+          <a class="ql-btn" onclick="go('documents.html')"><div class="ql-icon">✍️</div><div class="ql-label">Sign Doc</div></a>
+          <a class="ql-btn" onclick="go('payments.html')"><div class="ql-icon">💸</div><div class="ql-label">Send Money</div></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /body -->
+
+<!-- WALKTHROUGH ELEMENTS -->
+<div class="wt-overlay hidden" id="wtOverlay"></div>
+<div class="wt-spotlight" id="wtSpotlight" style="display:none"></div>
+<div class="wt-tooltip" id="wtTooltip" style="display:none">
+  <div class="wt-step-badge" id="wtBadge">Step 1 of 6</div>
+  <div class="wt-title" id="wtTitle">Welcome!</div>
+  <div class="wt-body" id="wtBody">Let's take a quick tour of Nexus.</div>
+  <div class="wt-footer">
+    <div class="wt-dots" id="wtDots"></div>
+    <div class="wt-btns">
+      <button class="wt-btn wt-skip" id="wtSkipBtn" onclick="endTour()">Skip tour</button>
+      <button class="wt-btn wt-next" id="wtNextBtn" onclick="nextStep()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+/* Helpers */
+function go(url){
+  window.location.href = url;
+}
+function toast(msg,type='i'){const t=document.createElement('div');t.className=`toast ${type}`;t.textContent=msg;document.getElementById('toasts').appendChild(t);setTimeout(()=>t.remove(),3000)}
+
+/* Greeting */
+(function(){
+  const h=new Date().getHours();
+  const greet=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  document.getElementById('heroTime').textContent=greet;
+})();
+
+/* Timeline */
+const tlItems=[
+  {cat:'meetings',dot:'cal',emoji:'📅',action:'Meeting accepted with Sarah Chen',detail:'Pitch Review Session · Today, 10:00 AM',time:'2h ago'},
+  {cat:'payments',dot:'pay',emoji:'💸',action:'Payment received from Jennifer Park',detail:'$25,000 · Seed round tranche 2',time:'5h ago'},
+  {cat:'docs',dot:'doc',emoji:'📋',action:'Term sheet signed',detail:'Series A Term Sheet · PDF · 8 pages',time:'Yesterday'},
+  {cat:'meetings',dot:'cal',emoji:'🗓',action:'New meeting request from Marcus Webb',detail:'Product Demo · Tomorrow, 2:00 PM',time:'Yesterday'},
+  {cat:'payments',dot:'pay',emoji:'⏳',action:'Pending payment from David Kim',detail:'$5,000 · Due diligence deposit',time:'2 days ago'},
+  {cat:'docs',dot:'doc',emoji:'📤',action:'Investment Contract sent for review',detail:'Investment Contract v2 · DOCX · 22 pages',time:'3 days ago'},
+  {cat:'meetings',dot:'vid',emoji:'🎥',action:'Video call completed',detail:'Due Diligence Review · 47 min',time:'4 days ago'},
+];
+
+let tlFilter='all';
+function filterTl(f,el){
+  tlFilter=f;
+  document.querySelectorAll('.tcf').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+  renderTl();
+}
+function renderTl(){
+  const body=document.getElementById('tlBody');
+  const list=tlFilter==='all'?tlItems:tlItems.filter(t=>t.cat===tlFilter);
+  body.innerHTML='';
+  list.forEach((item,i)=>{
+    const div=document.createElement('div');
+    div.className='tl-item';
+    div.innerHTML=`
+      <div class="tl-line"></div>
+      <div class="tl-dot-wrap"><div class="tl-dot ${item.dot}">${item.emoji}</div></div>
+      <div class="tl-content">
+        <div class="tl-action">${item.action}</div>
+        <div class="tl-detail">${item.detail}</div>
+      </div>
+      <div class="tl-time">${item.time}</div>
+    `;
+    body.appendChild(div);
+  });
+}
+
+/* Tour dismiss */
+function dismissTour(){document.getElementById('tourBar').style.display='none';toast('Tour dismissed. You can restart it from settings.','i')}
+
+/* WALKTHROUGH SYSTEM */
+let currentStep=0;
+const steps=[
+  {
+    target:'tourBar',
+    title:'👋 Welcome to Nexus!',
+    body:'This is your unified dashboard — the control centre for all your investor-entrepreneur activities. Let\'s explore each module in 6 quick steps.',
+    arrow:'bottom',pos:'below',
+  },
+  {
+    target:'mod-calendar',
+    title:'📅 Meeting Calendar',
+    body:'Schedule and manage your investor meetings. Accept or decline requests, add availability slots, and see all confirmed meetings at a glance.',
+    arrow:'top',pos:'below',
+  },
+  {
+    target:'mod-video',
+    title:'🎥 Video Calls',
+    body:'Join face-to-face calls with investors. Real camera + mic, screen sharing, in-call chat, draggable PiP window, and a post-call summary.',
+    arrow:'top',pos:'below',
+  },
+  {
+    target:'mod-docs',
+    title:'📁 Document Chamber',
+    body:'Upload contracts, NDAs, and term sheets. Use the e-signature pad to sign documents and track them through Draft → Review → Signed.',
+    arrow:'top',pos:'below',
+  },
+  {
+    target:'mod-payments',
+    title:'💳 Payments',
+    body:'Send and receive funds directly. View your full transaction history, fund deals between investors and entrepreneurs, and track pending payments.',
+    arrow:'top',pos:'below',
+  },
+  {
+    target:'mod-security',
+    title:'🔐 Security Center',
+    body:'Set a strong password, enable 2FA (app/SMS/email), revoke sessions, and understand your role-based permissions. Aim for a 100/100 score!',
+    arrow:'top',pos:'below',
+    isLast:true,
+  },
+];
+
+function startTour(){
+  currentStep=0;
+  document.getElementById('wtOverlay').classList.remove('hidden');
+  document.getElementById('wtOverlay').classList.add('visible');
+  showStep(0);
+}
+
+function showStep(idx){
+  const step=steps[idx];
+  const target=document.getElementById(step.target);
+  if(!target){nextStep();return}
+
+  // Scroll target into view
+  target.scrollIntoView({behavior:'smooth',block:'center'});
+
+  setTimeout(()=>{
+    const rect=target.getBoundingClientRect();
+    const pad=10;
+
+    // Position spotlight
+    const spotlight=document.getElementById('wtSpotlight');
+    spotlight.style.display='block';
+    spotlight.style.left=(rect.left-pad)+'px';
+    spotlight.style.top=(rect.top-pad)+'px';
+    spotlight.style.width=(rect.width+pad*2)+'px';
+    spotlight.style.height=(rect.height+pad*2)+'px';
+
+    // Position tooltip
+    const tooltip=document.getElementById('wtTooltip');
+    tooltip.style.display='block';
+    tooltip.className='wt-tooltip arrow-'+step.arrow;
+
+    const tW=300,tH=190,margin=16;
+    let tx,ty;
+    if(step.pos==='below'){
+      tx=rect.left+(rect.width/2)-(tW/2);
+      ty=rect.bottom+pad+margin;
+      if(ty+tH>window.innerHeight)ty=rect.top-pad-margin-tH;
+    } else {
+      tx=rect.left+(rect.width/2)-(tW/2);
+      ty=rect.top-pad-margin-tH;
+    }
+    tx=Math.max(12,Math.min(tx,window.innerWidth-tW-12));
+    ty=Math.max(12,Math.min(ty,window.innerHeight-tH-12));
+
+    tooltip.style.left=tx+'px';
+    tooltip.style.top=ty+'px';
+    tooltip.style.width=tW+'px';
+
+    // Content
+    document.getElementById('wtBadge').textContent=`Step ${idx+1} of ${steps.length}`;
+    document.getElementById('wtTitle').textContent=step.title;
+    document.getElementById('wtBody').textContent=step.body;
+    document.getElementById('wtNextBtn').textContent=step.isLast?'✅ Finish':'Next →';
+
+    // Dots
+    const dotsEl=document.getElementById('wtDots');
+    dotsEl.innerHTML='';
+    steps.forEach((_,i)=>{
+      const d=document.createElement('div');
+      d.className='wt-dot'+(i===idx?' active':'');
+      dotsEl.appendChild(d);
+    });
+  },300);
+}
+
+function nextStep(){
+  if(currentStep>=steps.length-1){endTour();return}
+  currentStep++;
+  showStep(currentStep);
+}
+
+function endTour(){
+  document.getElementById('wtOverlay').classList.remove('visible');
+  document.getElementById('wtOverlay').classList.add('hidden');
+  document.getElementById('wtSpotlight').style.display='none';
+  document.getElementById('wtTooltip').style.display='none';
+  if(currentStep>=steps.length-1){
+    toast('🎉 Tour complete! You know the platform now.','s');
+    document.getElementById('tourBar').style.display='none';
+  } else {
+    toast('Tour skipped. Click "Start Tour" anytime to restart.','i');
+  }
+}
+
+// Close on overlay click
+document.getElementById('wtOverlay').addEventListener('click',endTour);
+
+/* Init */
+renderTl();
+</script>
+</body>
+</html>

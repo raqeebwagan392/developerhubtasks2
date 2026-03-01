@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Nexus — Security Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f2f7;--white:#fff;--s1:#f7f8fc;--s2:#eef0f7;
+  --ink:#0f1221;--ink2:#2e3354;--muted:#7b82a3;--line:rgba(15,18,33,.1);--line2:rgba(15,18,33,.16);
+  --blue:#2563ff;--green:#059669;--red:#dc2626;--amber:#d97706;--purple:#7c3aed;
+  --fh:'Outfit',sans-serif;--fm:'JetBrains Mono',monospace;
+  --r:10px;--r2:16px;
+}
+html{font-size:16px}
+body{font-family:var(--fh);background:var(--bg);color:var(--ink);min-height:100vh}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:58px;background:var(--ink);position:sticky;top:0;z-index:100}
+.brand{font-family:var(--fm);font-size:13px;font-weight:600;letter-spacing:3px;color:#fff}
+.brand span{color:#4d9eff}
+.nav{display:flex;gap:2px}
+.nb{padding:7px 15px;border-radius:8px;font-size:12px;font-weight:600;font-family:var(--fh);color:rgba(255,255,255,.45);background:none;border:none;cursor:pointer;transition:all .15s;letter-spacing:.3px}
+.nb:hover{color:#fff;background:rgba(255,255,255,.08)}
+.nb.active{color:#4d9eff;background:rgba(77,158,255,.12)}
+.tb-user{display:flex;align-items:center;gap:10px;color:#fff}
+.tb-av{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#2563ff,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff}
+.tb-n{font-size:13px;font-weight:600}
+.tb-r{font-size:10px;color:rgba(255,255,255,.4);font-family:var(--fm);margin-top:1px}
+
+/* PAGE */
+.page{max-width:1000px;margin:0 auto;padding:32px 24px}
+
+/* Score hero */
+.score-hero{background:var(--ink);border-radius:20px;padding:36px;margin-bottom:24px;display:flex;align-items:center;gap:40px;flex-wrap:wrap;overflow:hidden;position:relative}
+.score-hero::before{content:'';position:absolute;top:-80px;right:-80px;width:300px;height:300px;background:radial-gradient(circle,rgba(37,99,255,.2) 0%,transparent 70%);pointer-events:none}
+.score-ring-wrap{flex-shrink:0}
+.score-ring{width:130px;height:130px;border-radius:50%;background:conic-gradient(var(--green) 0%,var(--green) 78%,rgba(255,255,255,.08) 78%);display:flex;align-items:center;justify-content:center;position:relative}
+.score-inner{width:96px;height:96px;border-radius:50%;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.score-num{font-family:var(--fm);font-size:28px;font-weight:600;color:#fff;line-height:1}
+.score-max{font-size:11px;color:rgba(255,255,255,.3);margin-top:2px}
+.score-info{flex:1}
+.score-label{font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:8px}
+.score-title{font-size:28px;font-weight:800;color:#fff;margin-bottom:6px;line-height:1.1}
+.score-sub{font-size:14px;color:rgba(255,255,255,.5);margin-bottom:18px}
+.score-badges{display:flex;gap:8px;flex-wrap:wrap}
+.sbadge{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.3px}
+.sbadge.on {background:rgba(5,150,105,.2);color:#34d399;border:1px solid rgba(5,150,105,.3)}
+.sbadge.off{background:rgba(220,38,38,.15);color:#f87171;border:1px solid rgba(220,38,38,.25)}
+.sbadge.warn{background:rgba(217,119,6,.15);color:#fbbf24;border:1px solid rgba(217,119,6,.25)}
+
+/* Two columns */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+
+/* Cards */
+.sec-card{background:var(--white);border:1px solid var(--line);border-radius:var(--r2);overflow:hidden}
+.sc-head{padding:20px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.sc-title{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.sc-title .icon{font-size:18px}
+.sc-body{padding:22px}
+
+/* PASSWORD SECTION */
+.pw-current-row{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.pw-inp-wrap{position:relative;flex:1}
+.pw-inp{width:100%;background:var(--s1);border:1.5px solid var(--line2);border-radius:var(--r);padding:11px 42px 11px 14px;font-family:var(--fh);font-size:14px;color:var(--ink);outline:none;transition:border-color .15s}
+.pw-inp:focus{border-color:var(--blue)}
+.pw-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);padding:2px}
+
+/* strength meter */
+.strength-wrap{margin-bottom:16px}
+.strength-bars{display:flex;gap:4px;height:5px;margin-bottom:6px}
+.sb{flex:1;border-radius:3px;background:var(--line);transition:background .3s}
+.sb.filled.weak{background:var(--red)}
+.sb.filled.fair{background:var(--amber)}
+.sb.filled.good{background:var(--blue)}
+.sb.filled.strong{background:var(--green)}
+.strength-label{font-size:12px;font-weight:600;color:var(--muted)}
+.strength-label.weak{color:var(--red)}
+.strength-label.fair{color:var(--amber)}
+.strength-label.good{color:var(--blue)}
+.strength-label.strong{color:var(--green)}
+
+.pw-reqs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:18px}
+.req{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);transition:color .2s}
+.req.met{color:var(--green)}
+.req-dot{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--line2);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;transition:all .2s}
+.req.met .req-dot{background:var(--green);border-color:var(--green);color:#fff}
+
+.save-pw-btn{width:100%;background:var(--blue);color:#fff;border:none;border-radius:var(--r);padding:12px;font-family:var(--fh);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
+.save-pw-btn:hover{background:#1d54f0;transform:translateY(-1px);box-shadow:0 4px 16px rgba(37,99,255,.25)}
+
+/* 2FA SECTION */
+.tfa-status{display:flex;align-items:center;justify-content:space-between;background:var(--s1);border:1.5px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:16px;cursor:pointer;transition:all .2s}
+.tfa-status:hover{border-color:var(--line2)}
+.tfa-status.enabled{border-color:rgba(5,150,105,.3);background:rgba(5,150,105,.04)}
+.tfa-label-wrap{}
+.tfa-name{font-size:14px;font-weight:600}
+.tfa-desc{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* toggle switch */
+.toggle{position:relative;width:46px;height:26px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-track{position:absolute;inset:0;background:var(--line2);border-radius:13px;cursor:pointer;transition:background .25s}
+.toggle input:checked+.toggle-track{background:var(--green)}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.2);transition:transform .25s}
+.toggle input:checked~.toggle-thumb{transform:translateX(20px)}
+
+/* OTP setup */
+.otp-setup{background:linear-gradient(135deg,rgba(37,99,255,.06),rgba(124,58,237,.04));border:1.5px dashed rgba(37,99,255,.25);border-radius:var(--r);padding:20px;margin-bottom:14px;text-align:center;display:none}
+.otp-setup.show{display:block}
+.otp-qr{width:100px;height:100px;background:var(--ink);border-radius:10px;margin:12px auto;display:flex;align-items:center;justify-content:center;font-size:40px}
+.otp-secret{font-family:var(--fm);font-size:12px;color:var(--muted);background:var(--s2);border-radius:6px;padding:6px 12px;letter-spacing:2px;display:inline-block;margin-bottom:14px}
+.otp-inputs{display:flex;gap:8px;justify-content:center;margin-bottom:14px}
+.otp-digit{width:44px;height:52px;text-align:center;font-family:var(--fm);font-size:22px;font-weight:700;background:var(--s1);border:1.5px solid var(--line2);border-radius:var(--r);outline:none;color:var(--ink);transition:border-color .15s}
+.otp-digit:focus{border-color:var(--blue)}
+.verify-btn{background:var(--green);color:#fff;border:none;border-radius:var(--r);padding:10px 24px;font-family:var(--fh);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
+.verify-btn:hover{background:#047857}
+
+/* SESSIONS */
+.session-list{display:flex;flex-direction:column;gap:8px}
+.session-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r);transition:all .15s}
+.session-row.current{border-color:rgba(5,150,105,.3);background:rgba(5,150,105,.03)}
+.sess-icon{font-size:22px;flex-shrink:0}
+.sess-info{flex:1}
+.sess-device{font-size:13px;font-weight:600}
+.sess-meta{font-size:11px;color:var(--muted);margin-top:2px;font-family:var(--fm)}
+.sess-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;background:rgba(5,150,105,.1);color:var(--green);border:1px solid rgba(5,150,105,.2)}
+.sess-revoke{background:none;border:1px solid var(--line2);border-radius:7px;padding:5px 12px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;font-family:var(--fh);transition:all .15s}
+.sess-revoke:hover{border-color:var(--red);color:var(--red);background:rgba(220,38,38,.05)}
+
+/* ROLE PANEL */
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.role-card{border:2px solid var(--line);border-radius:var(--r2);padding:18px 16px;cursor:pointer;transition:all .2s;position:relative}
+.role-card:hover{border-color:var(--line2)}
+.role-card.selected{border-color:var(--blue);background:rgba(37,99,255,.04)}
+.role-card.selected::after{content:'✓';position:absolute;top:10px;right:12px;font-size:13px;font-weight:800;color:var(--blue)}
+.rc-icon{font-size:28px;margin-bottom:10px}
+.rc-name{font-size:14px;font-weight:700;margin-bottom:4px}
+.rc-desc{font-size:12px;color:var(--muted);line-height:1.4}
+.role-perms{display:flex;flex-direction:column;gap:6px}
+.perm-row{display:flex;align-items:center;justify-content:space-between;font-size:12px;padding:8px 12px;border-radius:8px;background:var(--s1)}
+.perm-name{color:var(--ink2)}
+.perm-status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px}
+.perm-status.yes{background:rgba(5,150,105,.1);color:var(--green)}
+.perm-status.no {background:rgba(220,38,38,.08);color:var(--red)}
+.perm-status.lim{background:rgba(217,119,6,.1);color:var(--amber)}
+
+/* ACTIVITY LOG */
+.log-list{display:flex;flex-direction:column;gap:0}
+.log-row{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.log-row:last-child{border-bottom:none}
+.log-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:1px}
+.log-icon.ok{background:rgba(5,150,105,.1)}
+.log-icon.warn{background:rgba(217,119,6,.1)}
+.log-icon.err{background:rgba(220,38,38,.1)}
+.log-body{flex:1}
+.log-action{font-size:13px;font-weight:600}
+.log-meta{font-size:11px;color:var(--muted);margin-top:2px;font-family:var(--fm)}
+.log-time{font-size:11px;color:var(--muted);flex-shrink:0;font-family:var(--fm)}
+
+/* BUTTONS / MISC */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--r);font-family:var(--fh);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#1d54f0;transform:translateY(-1px)}
+.btn-ghost{background:none;color:var(--muted);border:1.5px solid var(--line2)}
+.btn-ghost:hover{color:var(--ink);border-color:var(--ink)}
+
+/* Toast */
+.toasts{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--ink);color:#fff;border-radius:10px;padding:11px 16px;font-size:13px;display:flex;align-items:center;gap:8px;box-shadow:0 8px 32px rgba(0,0,0,.25);animation:ti .3s ease;max-width:280px}
+@keyframes ti{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+.toast.s{border-left:3px solid var(--green)}
+.toast.e{border-left:3px solid var(--red)}
+.toast.i{border-left:3px solid var(--blue)}
+
+/* Responsive */
+@media(max-width:700px){.grid2{grid-template-columns:1fr}.role-grid{grid-template-columns:1fr}.score-hero{flex-direction:column;gap:20px}.nav{display:none}}
+</style>
+
+<style id="nx-nav-style">
+/* NEXUS SHARED TOPNAV */
+.nx-topnav{
+  position:fixed;top:0;left:0;right:0;z-index:9999;
+  background:#0a0c12;
+  border-bottom:1px solid rgba(255,255,255,0.07);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;height:52px;
+  font-family:'DM Sans','Outfit',sans-serif;
+}
+.nx-brand{
+  font-size:15px;font-weight:800;letter-spacing:3px;
+  color:#00e5a0;cursor:pointer;flex-shrink:0;
+}
+.nx-links{display:flex;gap:2px;}
+.nx-link{
+  display:flex;align-items:center;gap:5px;
+  padding:6px 12px;border-radius:8px;
+  font-size:12px;font-weight:500;
+  text-decoration:none;color:rgba(255,255,255,0.45);
+  transition:all .15s;white-space:nowrap;
+}
+.nx-link:hover{color:#fff;background:rgba(255,255,255,0.07);}
+.nx-link.active{color:#00e5a0;background:rgba(0,229,160,0.1);}
+.nx-ham{
+  display:none;background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.1);border-radius:7px;
+  color:#fff;font-size:16px;padding:5px 9px;cursor:pointer;
+}
+/* Push page content down */
+body > *:not(.nx-topnav){margin-top:0}
+.main,.page,.lobby-body,.hero,.topbar,.topnav,.shell,.page-wrapper{
+  padding-top:0 !important;
+}
+/* Hide original navbars once we inject ours */
+.sidebar,.topbar,.topnav,.header,.call-header+.video-stage,.topbar+*{
+  /* don't hide — just override top offset */
+}
+@media(max-width:700px){
+  .nx-links{
+    display:none;flex-direction:column;
+    position:fixed;top:52px;left:0;right:0;
+    background:#0a0c12;border-bottom:1px solid rgba(255,255,255,0.1);
+    padding:8px 0;z-index:9998;
+  }
+  .nx-links.open{display:flex;}
+  .nx-link{padding:10px 20px;border-radius:0;font-size:13px;}
+  .nx-ham{display:block;}
+}
+</style>
+
+<style id="nx-body-offset">
+  /* Offset page body below fixed topnav (52px) */
+  body { padding-top: 52px !important; }
+  /* Calendar has its own sidebar layout — fix its main content */
+  .main { padding-top: 0 !important; }
+  /* video call screen takes full height - handle it */
+  #callScreen { padding-top: 0 !important; }
+  #lobby { padding-top: 0 !important; }
+</style>
+</head>
+<body>
+<nav class="nx-topnav" id="nxTopnav">
+  <div class="nx-brand" onclick="location.href='dashboard.html'">NEXUS</div>
+  <div class="nx-links" id="nxLinks">
+    <a class="nx-link" href="dashboard.html">⊞ Dashboard</a>
+    <a class="nx-link" href="calendar.html">📅 Calendar</a>
+    <a class="nx-link" href="video-call.html">🎥 Video</a>
+    <a class="nx-link" href="documents.html">📁 Docs</a>
+    <a class="nx-link" href="payments.html">💳 Payments</a>
+    <a class="nx-link active" href="security.html">🔐 Security</a>
+  </div>
+  <button class="nx-ham" id="nxHam" onclick="document.getElementById('nxLinks').classList.toggle('open')">☰</button>
+</nav>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">NEX<span>US</span></div>
+  <div class="nav">
+    <button class="nb" onclick="location.href='dashboard.html'">Dashboard</button>
+    <button class="nb" onclick="location.href='video-call.html'">Calls</button>
+    <button class="nb" onclick="location.href='documents.html'">Docs</button>
+    <button class="nb" onclick="location.href='payments.html'">Payments</button>
+    <button class="nb active">Security</button>
+  </div>
+  <div class="tb-user">
+    <div class="tb-av">A</div>
+    <div><div class="tb-n">Abdul Raqeeb</div><div class="tb-r">ENTREPRENEUR</div></div>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- SCORE HERO -->
+  <div class="score-hero">
+    <div class="score-ring-wrap">
+      <div class="score-ring" id="scoreRing">
+        <div class="score-inner">
+          <div class="score-num" id="scoreNum">78</div>
+          <div class="score-max">/100</div>
+        </div>
+      </div>
+    </div>
+    <div class="score-info">
+      <div class="score-label">Security Score</div>
+      <div class="score-title" id="scoreTitle">Good — Keep going</div>
+      <div class="score-sub" id="scoreSub">Enable 2FA and set a strong password to reach 100</div>
+      <div class="score-badges">
+        <span class="sbadge on" id="badge2fa">2FA Disabled</span>
+        <span class="sbadge warn" id="badgePw">Password: Fair</span>
+        <span class="sbadge on">Sessions: 2 Active</span>
+        <span class="sbadge on">Role: Verified</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 1: Password + 2FA -->
+  <div class="grid2">
+
+    <!-- PASSWORD CARD -->
+    <div class="sec-card">
+      <div class="sc-head">
+        <div class="sc-title"><span class="icon">🔑</span> Change Password</div>
+      </div>
+      <div class="sc-body">
+        <label style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px">Current Password</label>
+        <div class="pw-inp-wrap" style="margin-bottom:14px">
+          <input class="pw-inp" type="password" id="curPw" placeholder="Enter current password" />
+          <button class="pw-eye" onclick="toggleVis('curPw',this)">👁</button>
+        </div>
+
+        <label style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px">New Password</label>
+        <div class="pw-inp-wrap" style="margin-bottom:10px">
+          <input class="pw-inp" type="password" id="newPw" placeholder="Enter new password" oninput="checkStrength(this.value)" />
+          <button class="pw-eye" onclick="toggleVis('newPw',this)">👁</button>
+        </div>
+
+        <!-- Strength meter -->
+        <div class="strength-wrap">
+          <div class="strength-bars">
+            <div class="sb" id="sb1"></div><div class="sb" id="sb2"></div>
+            <div class="sb" id="sb3"></div><div class="sb" id="sb4"></div>
+          </div>
+          <div class="strength-label" id="strengthLabel">Enter a password</div>
+        </div>
+
+        <!-- Requirements -->
+        <div class="pw-reqs">
+          <div class="req" id="req-len"><div class="req-dot">✓</div> 8+ characters</div>
+          <div class="req" id="req-upper"><div class="req-dot">✓</div> Uppercase letter</div>
+          <div class="req" id="req-lower"><div class="req-dot">✓</div> Lowercase letter</div>
+          <div class="req" id="req-num"><div class="req-dot">✓</div> Number</div>
+          <div class="req" id="req-sym"><div class="req-dot">✓</div> Symbol (!@#…)</div>
+          <div class="req" id="req-noreuse"><div class="req-dot">✓</div> Not reused</div>
+        </div>
+
+        <label style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px">Confirm Password</label>
+        <div class="pw-inp-wrap" style="margin-bottom:16px">
+          <input class="pw-inp" type="password" id="confirmPw" placeholder="Confirm new password" oninput="checkMatch()" />
+          <button class="pw-eye" onclick="toggleVis('confirmPw',this)">👁</button>
+        </div>
+
+        <button class="save-pw-btn" onclick="savePassword()">Update Password</button>
+      </div>
+    </div>
+
+    <!-- 2FA CARD -->
+    <div class="sec-card">
+      <div class="sc-head">
+        <div class="sc-title"><span class="icon">🛡</span> Two-Factor Auth</div>
+        <span style="font-size:11px;font-weight:700;color:var(--muted)" id="tfaStatusLabel">DISABLED</span>
+      </div>
+      <div class="sc-body">
+        <!-- Authenticator app -->
+        <div class="tfa-status" id="tfaAuthCard" onclick="toggleTFA('app')">
+          <div class="tfa-label-wrap">
+            <div class="tfa-name">📱 Authenticator App</div>
+            <div class="tfa-desc">Google Authenticator, Authy, etc.</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="tfaAppSwitch" onchange="toggleTFA('app')"/>
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+
+        <!-- QR setup area -->
+        <div class="otp-setup" id="otpSetup">
+          <div style="font-size:13px;font-weight:600;margin-bottom:4px">Scan QR with your authenticator</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Or enter the secret key manually</div>
+          <div class="otp-qr">📲</div>
+          <div class="otp-secret">NEXS-7X2K-M9WP-3RAQ</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Enter the 6-digit code from your app</div>
+          <div class="otp-inputs">
+            <input class="otp-digit" type="text" maxlength="1" oninput="otpMove(this,0)"/>
+            <input class="otp-digit" type="text" maxlength="1" oninput="otpMove(this,1)"/>
+            <input class="otp-digit" type="text" maxlength="1" oninput="otpMove(this,2)"/>
+            <input class="otp-digit" type="text" maxlength="1" oninput="otpMove(this,3)"/>
+            <input class="otp-digit" type="text" maxlength="1" oninput="otpMove(this,4)"/>
+            <input class="otp-digit" type="text" maxlength="1" oninput="otpMove(this,5)"/>
+          </div>
+          <button class="verify-btn" onclick="verify2FA()">Verify & Enable</button>
+        </div>
+
+        <!-- SMS -->
+        <div class="tfa-status" style="margin-top:10px" onclick="toggleTFA('sms')">
+          <div class="tfa-label-wrap">
+            <div class="tfa-name">💬 SMS Verification</div>
+            <div class="tfa-desc">Receive code via text message</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="tfaSmsSwitch"/>
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+
+        <!-- Email -->
+        <div class="tfa-status" style="margin-top:10px" onclick="toggleTFA('email')">
+          <div class="tfa-label-wrap">
+            <div class="tfa-name">✉️ Email Verification</div>
+            <div class="tfa-desc"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="aacbc6cfd2eac4cfd2dfd984c3c5">[email&#160;protected]</a> (recommended backup)</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="tfaEmailSwitch" checked/>
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+
+        <div style="margin-top:14px;font-size:12px;color:var(--muted);padding:10px 12px;background:var(--s1);border-radius:var(--r);line-height:1.5">
+          💡 Enable at least one 2FA method to increase your security score to 100/100
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 2: Active Sessions + Role-based Dashboard -->
+  <div class="grid2" style="margin-bottom:16px">
+
+    <!-- SESSIONS -->
+    <div class="sec-card">
+      <div class="sc-head">
+        <div class="sc-title"><span class="icon">💻</span> Active Sessions</div>
+        <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px" onclick="revokeAll()">Revoke All Others</button>
+      </div>
+      <div class="sc-body">
+        <div class="session-list" id="sessionList"></div>
+      </div>
+    </div>
+
+    <!-- ROLE SWITCHER -->
+    <div class="sec-card">
+      <div class="sc-head">
+        <div class="sc-title"><span class="icon">🎭</span> Role-Based Dashboard</div>
+      </div>
+      <div class="sc-body">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Your role determines what features and data you can access across the platform.</div>
+        <div class="role-grid">
+          <div class="role-card selected" id="role-entrepreneur" onclick="selectRole('entrepreneur')">
+            <div class="rc-icon">🚀</div>
+            <div class="rc-name">Entrepreneur</div>
+            <div class="rc-desc">Pitch, fund-raise, manage investor relations</div>
+          </div>
+          <div class="role-card" id="role-investor" onclick="selectRole('investor')">
+            <div class="rc-icon">💼</div>
+            <div class="rc-name">Investor</div>
+            <div class="rc-desc">Browse deals, send funds, due diligence</div>
+          </div>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Permissions for current role</div>
+        <div class="role-perms" id="rolePerms"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIVITY LOG (full width) -->
+  <div class="sec-card">
+    <div class="sc-head">
+      <div class="sc-title"><span class="icon">📋</span> Security Activity Log</div>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">Last 7 days</span>
+    </div>
+    <div class="sc-body">
+      <div class="log-list" id="logList"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toasts" id="toasts"></div>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+/* Helpers */
+function toast(msg,type='i'){const t=document.createElement('div');t.className=`toast ${type}`;t.textContent=msg;document.getElementById('toasts').appendChild(t);setTimeout(()=>t.remove(),3200)}
+
+/* Score */
+let score=78;
+const scoreLabels={50:'Needs improvement',70:'Fair — some gaps',78:'Good — Keep going',90:'Strong security',100:'Excellent — Fully secured'};
+
+function updateScore(){
+  const s=score;
+  document.getElementById('scoreNum').textContent=s;
+  const pct=s+'%';
+  const colors={50:'#dc2626',70:'#d97706',78:'#2563ff',90:'#059669',100:'#059669'};
+  const nearest=Object.keys(scoreLabels).reverse().find(k=>s>=k)||'50';
+  document.getElementById('scoreTitle').textContent=scoreLabels[nearest]||'Good';
+  document.getElementById('scoreRing').style.background=`conic-gradient(${colors[nearest]||'#2563ff'} 0%,${colors[nearest]||'#2563ff'} ${s}%,rgba(255,255,255,.08) ${s}%)`;
+}
+
+/* Password Strength */
+function checkStrength(v){
+  const reqs={len:v.length>=8,upper:/[A-Z]/.test(v),lower:/[a-z]/.test(v),num:/\d/.test(v),sym:/[!@#$%^&*()_+\-=\[\]{}|;:'",.<>?]/.test(v),noreuse:v!=='password123'&&v.length>0};
+  Object.keys(reqs).forEach(k=>{
+    const el=document.getElementById('req-'+k);
+    if(el)el.classList.toggle('met',reqs[k]);
+  });
+
+  const metCount=Object.values(reqs).filter(Boolean).length;
+  const bars=document.querySelectorAll('.sb');
+  bars.forEach(b=>b.className='sb');
+  const lbl=document.getElementById('strengthLabel');
+  let level='',cls='';
+  if(!v){lbl.textContent='Enter a password';lbl.className='strength-label';return}
+  if(metCount<=2){level='Weak';cls='weak';bars[0].className='sb filled weak'}
+  else if(metCount<=3){level='Fair';cls='fair';bars[0].className='sb filled fair';bars[1].className='sb filled fair'}
+  else if(metCount<=4){level='Good';cls='good';bars[0].className='sb filled good';bars[1].className='sb filled good';bars[2].className='sb filled good'}
+  else{level='Strong';cls='strong';bars.forEach(b=>b.className='sb filled strong')}
+  lbl.textContent=level;lbl.className='strength-label '+cls;
+  updateBadgePw(level);
+}
+
+function updateBadgePw(level){
+  const b=document.getElementById('badgePw');
+  b.textContent='Password: '+level;
+  b.className='sbadge '+(level==='Strong'?'on':level==='Good'?'on':'warn');
+  // adjust score
+  const scoreMap={Weak:60,Fair:68,Good:78,Strong:88};
+  score=(scoreMap[level]||78)+(document.getElementById('tfaAppSwitch').checked?12:0);
+  score=Math.min(100,score);
+  updateScore();
+}
+
+function checkMatch(){
+  const np=document.getElementById('newPw').value;
+  const cp=document.getElementById('confirmPw').value;
+  document.getElementById('confirmPw').style.borderColor=cp&&cp!==np?'var(--red)':cp&&cp===np?'var(--green)':'';
+}
+
+function toggleVis(id,btn){
+  const inp=document.getElementById(id);
+  if(inp.type==='password'){inp.type='text';btn.textContent='🙈'}
+  else{inp.type='password';btn.textContent='👁'}
+}
+
+function savePassword(){
+  const cur=document.getElementById('curPw').value;
+  const np=document.getElementById('newPw').value;
+  const cp=document.getElementById('confirmPw').value;
+  if(!cur){toast('Enter current password','e');return}
+  if(!np||np.length<8){toast('Password too short (8+ chars)','e');return}
+  if(np!==cp){toast('Passwords do not match','e');return}
+  toast('✅ Password updated successfully','s');
+  document.getElementById('curPw').value='';
+  document.getElementById('newPw').value='';
+  document.getElementById('confirmPw').value='';
+  document.querySelectorAll('.sb').forEach(b=>b.className='sb');
+  document.getElementById('strengthLabel').textContent='Enter a password';
+  document.getElementById('strengthLabel').className='strength-label';
+  document.querySelectorAll('.req').forEach(r=>r.classList.remove('met'));
+}
+
+/* 2FA */
+let tfa2Enabled=false;
+function toggleTFA(method){
+  if(method==='app'){
+    const sw=document.getElementById('tfaAppSwitch');
+    const setup=document.getElementById('otpSetup');
+    if(sw.checked){setup.classList.add('show')}
+    else{setup.classList.remove('show');if(tfa2Enabled){disable2FA()}}
+  } else if(method==='sms'){
+    const sw=document.getElementById('tfaSmsSwitch');
+    if(sw.checked)toast('📱 SMS verification enabled','s');
+    else toast('SMS verification disabled','i');
+    adjustScore2FA();
+  } else {
+    const sw=document.getElementById('tfaEmailSwitch');
+    if(sw.checked)toast('✉️ Email verification enabled','s');
+    else toast('Email verification disabled','i');
+    adjustScore2FA();
+  }
+}
+
+function otpMove(el,idx){
+  const digits=document.querySelectorAll('.otp-digit');
+  if(el.value&&idx<5)digits[idx+1].focus();
+  if(digits[5].value&&Array.from(digits).every(d=>d.value)){
+    setTimeout(()=>verify2FA(),200);
+  }
+}
+
+function verify2FA(){
+  const digits=document.querySelectorAll('.otp-digit');
+  const code=Array.from(digits).map(d=>d.value).join('');
+  if(code.length<6||!/^\d+$/.test(code)){toast('Enter a valid 6-digit code','e');return}
+  tfa2Enabled=true;
+  document.getElementById('otpSetup').classList.remove('show');
+  document.getElementById('tfaAuthCard').classList.add('enabled');
+  document.getElementById('tfaStatusLabel').textContent='ENABLED';
+  document.getElementById('badge2fa').textContent='2FA: App ✓';
+  document.getElementById('badge2fa').className='sbadge on';
+  adjustScore2FA();
+  toast('🛡 Two-factor authentication enabled!','s');
+}
+
+function disable2FA(){
+  tfa2Enabled=false;
+  document.getElementById('tfaAuthCard').classList.remove('enabled');
+  document.getElementById('tfaStatusLabel').textContent='DISABLED';
+  document.getElementById('badge2fa').textContent='2FA Disabled';
+  document.getElementById('badge2fa').className='sbadge off';
+  adjustScore2FA();
+  toast('2FA app disabled','i');
+}
+
+function adjustScore2FA(){
+  const anyOn=document.getElementById('tfaAppSwitch').checked||document.getElementById('tfaSmsSwitch').checked||document.getElementById('tfaEmailSwitch').checked;
+  score=Math.min(100,(score<88?78:score)+(anyOn?12:0));
+  updateScore();
+}
+
+/* Sessions */
+const sessions=[
+  {icon:'🖥️',device:'MacBook Pro — Chrome 121',loc:'Chicago, IL · 192.168.1.1',time:'Active now',current:true},
+  {icon:'📱',device:'iPhone 15 — Safari',loc:'Chicago, IL · 192.168.1.2',time:'2 hours ago',current:false},
+  {icon:'💻',device:'Windows 11 — Edge',loc:'New York, NY · 72.14.201.9',time:'Yesterday 4:30 PM',current:false},
+];
+
+function renderSessions(){
+  const list=document.getElementById('sessionList');
+  list.innerHTML='';
+  sessions.filter(s=>s.active!==false).forEach((s,i)=>{
+    const row=document.createElement('div');
+    row.className='session-row'+(s.current?' current':'');
+    row.innerHTML=`
+      <div class="sess-icon">${s.icon}</div>
+      <div class="sess-info">
+        <div class="sess-device">${s.device}</div>
+        <div class="sess-meta">${s.loc} · ${s.time}</div>
+      </div>
+      ${s.current?'<span class="sess-badge">Current</span>':`<button class="sess-revoke" onclick="revokeSession(${i})">Revoke</button>`}
+    `;
+    list.appendChild(row);
+  });
+}
+
+function revokeSession(i){
+  sessions[i].active=false;
+  renderSessions();
+  toast('Session revoked','s');
+}
+
+function revokeAll(){
+  sessions.forEach((s,i)=>{if(!s.current)s.active=false});
+  renderSessions();
+  toast('All other sessions revoked','s');
+}
+
+/* Role */
+const rolePerms={
+  entrepreneur:[
+    {name:'Send Payments',status:'yes'},
+    {name:'Receive Investments',status:'yes'},
+    {name:'View Investor Profiles',status:'yes'},
+    {name:'Approve Investments',status:'no'},
+    {name:'Access Analytics',status:'lim'},
+    {name:'Manage Users',status:'no'},
+  ],
+  investor:[
+    {name:'Send Payments',status:'yes'},
+    {name:'Fund Deals',status:'yes'},
+    {name:'View Pitches',status:'yes'},
+    {name:'Approve Investments',status:'yes'},
+    {name:'Access Analytics',status:'yes'},
+    {name:'Manage Users',status:'no'},
+  ],
+};
+
+function selectRole(role){
+  document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('role-'+role).classList.add('selected');
+  const perms=document.getElementById('rolePerms');
+  perms.innerHTML='';
+  rolePerms[role].forEach(p=>{
+    const row=document.createElement('div');
+    row.className='perm-row';
+    const labelMap={yes:'Allowed',no:'Denied',lim:'Limited'};
+    row.innerHTML=`<span class="perm-name">${p.name}</span><span class="perm-status ${p.status}">${labelMap[p.status]}</span>`;
+    perms.appendChild(row);
+  });
+  toast(`Viewing ${role} permissions`,'i');
+}
+
+/* Activity Log */
+const logs=[
+  {icon:'ok',emoji:'🔐',action:'Password changed successfully',meta:'Chrome · Chicago, IL',time:'2h ago'},
+  {icon:'ok',emoji:'✅',action:'Login from new device verified',meta:'iPhone 15 Safari · Chicago, IL',time:'5h ago'},
+  {icon:'warn',emoji:'⚠️',action:'Failed login attempt (×3)',meta:'Unknown · New York, NY',time:'Yesterday'},
+  {icon:'ok',emoji:'🛡',action:'2FA email verification passed',meta:'Chrome · Chicago, IL',time:'2 days ago'},
+  {icon:'ok',emoji:'👤',action:'Profile updated',meta:'Chrome · Chicago, IL',time:'3 days ago'},
+  {icon:'err',emoji:'❌',action:'Session revoked (suspicious location)',meta:'Firefox · Unknown location',time:'5 days ago'},
+  {icon:'ok',emoji:'🔑',action:'API key generated',meta:'Chrome · Chicago, IL',time:'6 days ago'},
+];
+
+function renderLog(){
+  const list=document.getElementById('logList');
+  list.innerHTML='';
+  logs.forEach(l=>{
+    const row=document.createElement('div');
+    row.className='log-row';
+    row.innerHTML=`
+      <div class="log-icon ${l.icon}">${l.emoji}</div>
+      <div class="log-body">
+        <div class="log-action">${l.action}</div>
+        <div class="log-meta">${l.meta}</div>

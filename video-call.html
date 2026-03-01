@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nexus — Video Call</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #060608;
+      --surface:  #0f1117;
+      --surface2: #181c26;
+      --border:   rgba(255,255,255,0.06);
+      --border2:  rgba(255,255,255,0.1);
+      --text:     #f0f2fa;
+      --muted:    #6b7280;
+      --accent:   #00d4ff;
+      --green:    #00e676;
+      --red:      #ff4560;
+      --amber:    #ffb800;
+      --purple:   #b06cff;
+      --font-h:   'Syne', sans-serif;
+      --font-b:   'Inter', sans-serif;
+      --r:        12px;
+    }
+
+    body {
+      font-family: var(--font-b);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* LOBBY */
+    #lobby {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top nav bar */
+    .topnav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 32px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(6,6,8,0.9);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .brand { font-family: var(--font-h); font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+    .brand span { color: var(--accent); }
+    .nav-links { display: flex; gap: 6px; }
+    .nav-link {
+      padding: 7px 14px; border-radius: 8px; font-size: 13px;
+      font-weight: 500; color: var(--muted); cursor: pointer;
+      background: none; border: none; font-family: var(--font-b);
+      transition: all 0.15s;
+    }
+    .nav-link:hover  { color: var(--text); background: var(--surface2); }
+    .nav-link.active { color: var(--accent); background: rgba(0,212,255,0.08); }
+    .nav-user { display: flex; align-items: center; gap: 10px; }
+    .nav-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+    }
+    .nav-uname { font-size: 13px; font-weight: 600; }
+    .nav-urole { font-size: 11px; color: var(--muted); }
+
+    /* Lobby content */
+    .lobby-body { flex: 1; padding: 40px 32px; max-width: 1100px; margin: 0 auto; width: 100%; }
+
+    .lobby-title {
+      font-family: var(--font-h);
+      font-size: 42px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .lobby-title .hi { color: var(--accent); }
+    .lobby-sub { color: var(--muted); font-size: 15px; margin-bottom: 36px; }
+
+    /* Instant Join bar */
+    .instant-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, rgba(0,212,255,0.07), rgba(176,108,255,0.07));
+      border: 1px solid rgba(0,212,255,0.2);
+      border-radius: 16px;
+      padding: 18px 24px;
+      margin-bottom: 36px;
+    }
+    .instant-bar input {
+      flex: 1; background: var(--surface2); border: 1px solid var(--border2);
+      border-radius: 10px; padding: 11px 16px;
+      color: var(--text); font-family: var(--font-b); font-size: 14px;
+      outline: none;
+    }
+    .instant-bar input::placeholder { color: var(--muted); }
+    .instant-bar input:focus { border-color: var(--accent); }
+
+    /* Section label */
+    .section-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 16px;
+    }
+
+    /* Call cards - horizontal list */
+    .call-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
+
+    .call-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px 22px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .call-row:hover { border-color: var(--border2); background: var(--surface2); transform: translateX(4px); }
+    .call-row.live  { border-color: rgba(0,230,118,0.3); }
+
+    .cr-avatar {
+      width: 48px; height: 48px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 700; flex-shrink: 0;
+      font-family: var(--font-h);
+    }
+    .cr-info   { flex: 1; }
+    .cr-name   { font-size: 15px; font-weight: 600; font-family: var(--font-h); }
+    .cr-topic  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .cr-meta   { display: flex; align-items: center; gap: 16px; font-size: 12px; color: var(--muted); }
+    .cr-time   { font-size: 12px; color: var(--muted); }
+
+    .live-pill {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(0,230,118,0.12); border: 1px solid rgba(0,230,118,0.25);
+      border-radius: 20px; padding: 4px 12px;
+      font-size: 11px; font-weight: 700; color: var(--green);
+    }
+    .live-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--green);
+      animation: blink 1.2s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .upcoming-pill {
+      background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.2);
+      border-radius: 20px; padding: 4px 12px;
+      font-size: 11px; font-weight: 700; color: var(--accent);
+    }
+
+    .join-btn {
+      padding: 10px 22px; border-radius: 10px;
+      font-family: var(--font-b); font-size: 13px; font-weight: 600;
+      cursor: pointer; border: none; transition: all 0.15s; white-space: nowrap;
+    }
+    .join-btn.live    { background: var(--green); color: #000; }
+    .join-btn.live:hover { background: #00c064; transform: scale(1.03); }
+    .join-btn.upcoming { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
+    .join-btn.upcoming:hover { background: rgba(255,255,255,0.08); }
+
+    /* IN-CALL SCREEN */
+    #callScreen {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      background: #020305;
+      overflow: hidden;
+    }
+    #callScreen.active { display: flex; }
+
+    /* Call header */
+    .call-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 24px;
+      background: rgba(2,3,5,0.95);
+      border-bottom: 1px solid var(--border);
+      z-index: 10;
+    }
+    .call-header-left { display: flex; align-items: center; gap: 12px; }
+    .rec-dot {
+      width: 10px; height: 10px; border-radius: 50%; background: var(--red);
+      animation: blink 1s infinite;
+    }
+    .call-name-h { font-family: var(--font-h); font-size: 15px; font-weight: 700; }
+    .call-timer-h { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; letter-spacing: 0.5px; }
+    .hd-badge {
+      background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.2);
+      border-radius: 6px; padding: 2px 8px; font-size: 10px; font-weight: 700; color: var(--accent);
+    }
+
+    /* Video stage */
+    .video-stage {
+      flex: 1;
+      position: relative;
+      background: #020305;
+      overflow: hidden;
+    }
+
+    /* Remote — full screen */
+    .remote-video-wrap {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at center, #0d1020 0%, #020305 100%);
+      display: flex; align-items: center; justify-content: center;
+    }
+    #remoteVideo { width: 100%; height: 100%; object-fit: cover; }
+    .remote-placeholder {
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+    }
+    .remote-big-avatar {
+      width: 100px; height: 100px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-h); font-size: 36px; font-weight: 800;
+      box-shadow: 0 0 40px rgba(0,212,255,0.2);
+    }
+    .remote-pname { font-family: var(--font-h); font-size: 18px; color: var(--muted); }
+
+    /* Local PiP */
+    .local-pip {
+      position: absolute;
+      top: 20px; right: 20px;
+      width: 200px; height: 130px;
+      background: #0a0c12;
+      border-radius: 14px;
+      border: 2px solid rgba(255,255,255,0.1);
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+      cursor: move;
+      z-index: 20;
+      transition: border-color 0.2s;
+    }
+    .local-pip:hover { border-color: var(--accent); }
+    #localVideo { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .local-pip-placeholder {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(circle, #1a1f2e, #0a0c12);
+    }
+    .you-badge {
+      position: absolute; bottom: 8px; left: 8px;
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+      border-radius: 6px; padding: 2px 8px;
+      font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.7);
+    }
+    .cam-off-overlay {
+      position: absolute; inset: 0;
+      background: #0a0c12;
+      display: none;
+      align-items: center; justify-content: center;
+      font-size: 28px;
+    }
+    .cam-off-overlay.show { display: flex; }
+
+    /* Name tag on remote */
+    .remote-nametag {
+      position: absolute; bottom: 90px; left: 20px;
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
+      border-radius: 10px; padding: 6px 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .remote-nametag-name { font-size: 13px; font-weight: 600; }
+    .remote-nametag-role { font-size: 11px; color: var(--muted); }
+
+    /* Control Dock */
+    .control-dock {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px 24px;
+      background: rgba(2,3,5,0.98);
+      border-top: 1px solid var(--border);
+    }
+
+    .dock-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
+      width: 58px; height: 58px;
+      border-radius: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      cursor: pointer; font-size: 20px;
+      transition: all 0.18s;
+      font-family: var(--font-b);
+      justify-content: center;
+    }
+    .dock-btn:hover { background: var(--surface2); transform: translateY(-2px); }
+    .dock-btn.off   { background: rgba(255,69,96,0.12); border-color: rgba(255,69,96,0.3); }
+    .dock-btn.end   {
+      background: var(--red); border-color: var(--red);
+      width: 64px; height: 64px; border-radius: 50%; font-size: 22px;
+    }
+    .dock-btn.end:hover { background: #e03050; transform: scale(1.08) translateY(-2px); }
+    .dock-label { font-size: 9px; color: var(--muted); font-weight: 500; letter-spacing: 0.3px; }
+
+    /* Slide panels */
+    .side-panel {
+      position: fixed; top: 0; right: -320px;
+      width: 300px; height: 100vh;
+      background: var(--surface);
+      border-left: 1px solid var(--border2);
+      z-index: 50;
+      display: flex; flex-direction: column;
+      transition: right 0.3s ease;
+    }
+    .side-panel.open { right: 0; }
+    .panel-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 20px; border-bottom: 1px solid var(--border);
+      font-family: var(--font-h); font-size: 14px; font-weight: 700;
+    }
+    .close-x {
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      font-size: 18px; padding: 2px; transition: color 0.15s;
+    }
+    .close-x:hover { color: var(--text); }
+
+    /* Chat */
+    .chat-msgs { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .msg-bubble {
+      max-width: 85%; padding: 10px 13px; border-radius: 14px;
+      font-size: 13px; line-height: 1.4;
+    }
+    .msg-bubble.mine   { background: rgba(0,212,255,0.15); align-self: flex-end; border-bottom-right-radius: 4px; }
+    .msg-bubble.theirs { background: var(--surface2); align-self: flex-start; border-bottom-left-radius: 4px; }
+    .msg-who { font-size: 10px; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
+    .chat-footer {
+      padding: 12px; border-top: 1px solid var(--border);
+      display: flex; gap: 8px;
+    }
+    .chat-inp {
+      flex: 1; background: var(--surface2); border: 1px solid var(--border2);
+      border-radius: 10px; padding: 9px 12px;
+      color: var(--text); font-family: var(--font-b); font-size: 13px; outline: none;
+    }
+    .chat-inp:focus { border-color: var(--accent); }
+    .send-btn {
+      background: var(--accent); color: #000; border: none; border-radius: 10px;
+      padding: 9px 16px; font-weight: 700; font-size: 12px; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .send-btn:hover { background: #00bde0; }
+
+    /* Participants */
+    .p-list { padding: 12px 0; overflow-y: auto; }
+    .p-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 20px; transition: background 0.15s;
+    }
+    .p-item:hover { background: rgba(255,255,255,0.03); }
+    .p-av {
+      width: 38px; height: 38px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-h); font-size: 13px; font-weight: 700;
+    }
+    .p-nm { font-size: 13px; font-weight: 600; }
+    .p-rl { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .p-mic-icon { margin-left: auto; font-size: 14px; }
+
+    /* Screen share overlay */
+    .ss-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+      z-index: 100;
+      align-items: center; justify-content: center; flex-direction: column; gap: 14px;
+    }
+    .ss-overlay.show { display: flex; }
+    .ss-icon-big { font-size: 64px; }
+    .ss-txt { font-family: var(--font-h); font-size: 22px; font-weight: 800; }
+    .ss-sub { color: var(--muted); font-size: 14px; margin-bottom: 8px; }
+    .stop-share-btn {
+      background: var(--red); color: #fff; border: none; border-radius: 10px;
+      padding: 11px 24px; font-weight: 700; font-size: 14px; cursor: pointer;
+    }
+
+    /* End call modal */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+      z-index: 200; align-items: center; justify-content: center;
+    }
+    .overlay.show { display: flex; }
+    .end-card {
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: 20px; padding: 36px 32px;
+      width: 360px; text-align: center;
+      animation: pop 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes pop { from { opacity:0; transform:scale(0.88); } to { opacity:1; transform:scale(1); } }
+    .end-emoji { font-size: 52px; margin-bottom: 14px; }
+    .end-title { font-family: var(--font-h); font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+    .end-sub   { color: var(--muted); font-size: 13px; margin-bottom: 22px; }
+    .end-stats {
+      display: grid; grid-template-columns: repeat(3,1fr); gap: 10px;
+      background: var(--surface2); border-radius: 14px; padding: 16px; margin-bottom: 22px;
+    }
+    .end-stat-val { font-family: var(--font-h); font-size: 20px; font-weight: 800; color: var(--accent); }
+    .end-stat-lbl { font-size: 10px; color: var(--muted); font-weight: 500; margin-top: 2px; }
+    .end-btns { display: flex; gap: 10px; }
+    .end-btns button {
+      flex: 1; padding: 11px; border-radius: 12px;
+      font-family: var(--font-b); font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.15s; border: none;
+    }
+    .eb-back  { background: var(--surface2); color: var(--text); border: 1px solid var(--border2) !important; }
+    .eb-again { background: var(--accent); color: #000; }
+    .eb-again:hover { background: #00bde0; }
+
+    /* Toast */
+    .toasts {
+      position: fixed; bottom: 20px; right: 20px;
+      z-index: 9999; display: flex; flex-direction: column; gap: 8px;
+    }
+    .toast {
+      background: var(--surface2); border: 1px solid var(--border2);
+      border-radius: 10px; padding: 11px 16px;
+      font-size: 13px; color: var(--text);
+      display: flex; align-items: center; gap: 8px;
+      animation: slide-in 0.3s ease; max-width: 280px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    @keyframes slide-in { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+    .toast.s { border-left: 3px solid var(--green); }
+    .toast.i { border-left: 3px solid var(--accent); }
+    .toast.w { border-left: 3px solid var(--amber); }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      .lobby-title { font-size: 28px; }
+      .lobby-body { padding: 24px 16px; }
+      .topnav { padding: 14px 16px; }
+      .nav-links { display: none; }
+      .cr-meta { display: none; }
+      .local-pip { width: 130px; height: 88px; }
+      .dock-btn { width: 48px; height: 48px; font-size: 17px; }
+    }
+  </style>
+
+<style id="nx-nav-style">
+/* NEXUS SHARED TOPNAV */
+.nx-topnav{
+  position:fixed;top:0;left:0;right:0;z-index:9999;
+  background:#0a0c12;
+  border-bottom:1px solid rgba(255,255,255,0.07);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;height:52px;
+  font-family:'DM Sans','Outfit',sans-serif;
+}
+.nx-brand{
+  font-size:15px;font-weight:800;letter-spacing:3px;
+  color:#00e5a0;cursor:pointer;flex-shrink:0;
+}
+.nx-links{display:flex;gap:2px;}
+.nx-link{
+  display:flex;align-items:center;gap:5px;
+  padding:6px 12px;border-radius:8px;
+  font-size:12px;font-weight:500;
+  text-decoration:none;color:rgba(255,255,255,0.45);
+  transition:all .15s;white-space:nowrap;
+}
+.nx-link:hover{color:#fff;background:rgba(255,255,255,0.07);}
+.nx-link.active{color:#00e5a0;background:rgba(0,229,160,0.1);}
+.nx-ham{
+  display:none;background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.1);border-radius:7px;
+  color:#fff;font-size:16px;padding:5px 9px;cursor:pointer;
+}
+/* Push page content down */
+body > *:not(.nx-topnav){margin-top:0}
+.main,.page,.lobby-body,.hero,.topbar,.topnav,.shell,.page-wrapper{
+  padding-top:0 !important;
+}
+/* Hide original navbars once we inject ours */
+.sidebar,.topbar,.topnav,.header,.call-header+.video-stage,.topbar+*{
+  /* don't hide — just override top offset */
+}
+@media(max-width:700px){
+  .nx-links{
+    display:none;flex-direction:column;
+    position:fixed;top:52px;left:0;right:0;
+    background:#0a0c12;border-bottom:1px solid rgba(255,255,255,0.1);
+    padding:8px 0;z-index:9998;
+  }
+  .nx-links.open{display:flex;}
+  .nx-link{padding:10px 20px;border-radius:0;font-size:13px;}
+  .nx-ham{display:block;}
+}
+</style>
+
+<style id="nx-body-offset">
+  /* Offset page body below fixed topnav (52px) */
+  body { padding-top: 52px !important; }
+  /* Calendar has its own sidebar layout — fix its main content */
+  .main { padding-top: 0 !important; }
+  /* video call screen takes full height - handle it */
+  #callScreen { padding-top: 0 !important; }
+  #lobby { padding-top: 0 !important; }
+</style>
+</head>
+<body>
+<nav class="nx-topnav" id="nxTopnav">
+  <div class="nx-brand" onclick="location.href='dashboard.html'">NEXUS</div>
+  <div class="nx-links" id="nxLinks">
+    <a class="nx-link" href="dashboard.html">⊞ Dashboard</a>
+    <a class="nx-link" href="calendar.html">📅 Calendar</a>
+    <a class="nx-link active" href="video-call.html">🎥 Video</a>
+    <a class="nx-link" href="documents.html">📁 Docs</a>
+    <a class="nx-link" href="payments.html">💳 Payments</a>
+    <a class="nx-link" href="security.html">🔐 Security</a>
+  </div>
+  <button class="nx-ham" id="nxHam" onclick="document.getElementById('nxLinks').classList.toggle('open')">☰</button>
+</nav>
+
+<!-- LOBBY -->
+<div id="lobby">
+  <nav class="topnav">
+    <div class="brand">NEX<span>US</span></div>
+    <div class="nav-links">
+      <button class="nav-link">Dashboard</button>
+      <button class="nav-link">Calendar</button>
+      <button class="nav-link active">Video Calls</button>
+      <button class="nav-link">Documents</button>
+      <button class="nav-link">Payments</button>
+    </div>
+    <div class="nav-user">
+      <div class="nav-avatar">A</div>
+      <div>
+        <div class="nav-uname">Abdul Raqeeb</div>
+        <div class="nav-urole">Entrepreneur</div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="lobby-body">
+    <h1 class="lobby-title">Your <span class="hi">Calls</span></h1>
+    <p class="lobby-sub">Connect face-to-face with investors and entrepreneurs</p>
+
+    <!-- Instant call bar -->
+    <div class="instant-bar">
+      <span style="font-size:22px;">⚡</span>
+      <input type="text" id="instantName" placeholder="Enter name or meeting code…" />
+      <button class="join-btn live" onclick="quickJoin()">Start Instantly</button>
+    </div>
+
+    <div class="section-label">Scheduled Calls</div>
+    <div class="call-list" id="callList"></div>
+  </div>
+</div>
+
+<!-- IN-CALL SCREEN -->
+<div id="callScreen">
+  <!-- Header -->
+  <div class="call-header">
+    <div class="call-header-left">
+      <div class="rec-dot"></div>
+      <div class="call-name-h" id="callNameH">Meeting</div>
+      <div class="call-timer-h" id="timerH">00:00</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="hd-badge">HD</div>
+      <div style="font-size:12px;color:var(--muted);">2 participants</div>
+    </div>
+  </div>
+
+  <!-- Video stage -->
+  <div class="video-stage">
+    <!-- Remote -->
+    <div class="remote-video-wrap" id="remoteWrap">
+      <video id="remoteVideo" autoplay playsinline muted style="display:none; width:100%; height:100%; object-fit:cover;"></video>
+      <div class="remote-placeholder" id="remotePlaceholder">
+        <div class="remote-big-avatar" id="remoteBigAvatar" style="background:linear-gradient(135deg,#22d07a,#00d4ff)">SC</div>
+        <div class="remote-pname" id="remotePname">Sarah Chen</div>
+      </div>
+    </div>
+
+    <!-- Local PiP -->
+    <div class="local-pip" id="localPip">
+      <video id="localVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video>
+      <div class="local-pip-placeholder" id="localPlaceholder">
+        <div style="font-size:28px;">👤</div>
+      </div>
+      <div class="cam-off-overlay" id="camOffOverlay">🚫</div>
+      <div class="you-badge">You</div>
+    </div>
+
+    <!-- Remote nametag -->
+    <div class="remote-nametag">
+      <div>
+        <div class="remote-nametag-name" id="remoteNametag">Sarah Chen</div>
+        <div class="remote-nametag-role">Investor · Series A</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Control dock -->
+  <div class="control-dock">
+    <button class="dock-btn" id="btnPeople" onclick="togglePanel('people')" title="Participants">
+      <span>👥</span><div class="dock-label">People</div>
+    </button>
+    <button class="dock-btn" id="btnMic" onclick="toggleMic()" title="Microphone">
+      <span id="micEmoji">🎤</span><div class="dock-label">Mute</div>
+    </button>
+    <button class="dock-btn" id="btnCam" onclick="toggleCam()" title="Camera">
+      <span id="camEmoji">📷</span><div class="dock-label">Camera</div>
+    </button>
+    <button class="dock-btn end" onclick="endCall()" title="End Call">📵</button>
+    <button class="dock-btn" id="btnShare" onclick="toggleScreen()" title="Screen Share">
+      <span id="shareEmoji">🖥️</span><div class="dock-label">Share</div>
+    </button>
+    <button class="dock-btn" id="btnChat" onclick="togglePanel('chat')" title="Chat">
+      <span>💬</span><div class="dock-label">Chat</div>
+    </button>
+    <button class="dock-btn" onclick="goFullscreen()" title="Fullscreen">
+      <span>⛶</span><div class="dock-label">Full</div>
+    </button>
+  </div>
+</div>
+
+<!-- Participants Panel -->
+<div class="side-panel" id="peoplePanel">
+  <div class="panel-head">
+    <span>Participants (2)</span>
+    <button class="close-x" onclick="closePanel('people')">✕</button>
+  </div>
+  <div class="p-list">
+    <div class="p-item">
+      <div class="p-av" style="background:linear-gradient(135deg,#00e676,#00d4ff)">SC</div>
+      <div><div class="p-nm">Sarah Chen</div><div class="p-rl">Investor · Host</div></div>
+      <div class="p-mic-icon">🎤</div>
+    </div>
+    <div class="p-item">
+      <div class="p-av" style="background:linear-gradient(135deg,#00d4ff,#b06cff)">A</div>
+      <div><div class="p-nm">Alex Rivera</div><div class="p-rl">Entrepreneur · You</div></div>
+      <div class="p-mic-icon" id="yourMicIcon">🎤</div>
+    </div>
+  </div>
+</div>
+
+<!-- Chat Panel -->
+<div class="side-panel" id="chatPanel">
+  <div class="panel-head">
+    <span>In-Call Chat</span>
+    <button class="close-x" onclick="closePanel('chat')">✕</button>
+  </div>
+  <div class="chat-msgs" id="chatMsgs"></div>
+  <div class="chat-footer">
+    <input class="chat-inp" id="chatInp" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendMsg()" />
+    <button class="send-btn" onclick="sendMsg()">Send</button>
+  </div>
+</div>
+
+<!-- Screen Share Overlay -->
+<div class="ss-overlay" id="ssOverlay">
+  <div class="ss-icon-big">🖥️</div>
+  <div class="ss-txt">You're sharing your screen</div>
+  <div class="ss-sub">All participants can see your screen</div>
+  <button class="stop-share-btn" onclick="stopScreen()">Stop Sharing</button>
+</div>
+
+<!-- End Call Modal -->
+<div class="overlay" id="endOverlay">
+  <div class="end-card">
+    <div class="end-emoji">👋</div>
+    <div class="end-title">Call Ended</div>
+    <div class="end-sub" id="endSub">Great meeting!</div>
+    <div class="end-stats" id="endStats"></div>
+    <div class="end-btns">
+      <button class="eb-back" onclick="backToLobby()">Back to Calls</button>
+      <button class="eb-again" onclick="backToLobby(); setTimeout(()=>document.querySelector('.join-btn.live').click(),300)">Call Again</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+/* Helpers */
+function uid() { return Math.random().toString(36).slice(2,9); }
+function toast(msg, type='i') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+function fmt(s) {
+  const m = Math.floor(s/60), sec = s%60;
+  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+/* Data */
+const calls = [
+  { id:uid(), name:'Sarah Chen',   initials:'SC', role:'Investor · Series A',  topic:'Pitch Review Session', time:'Today, 10:00 AM', dur:'60 min', status:'live',     grad:'linear-gradient(135deg,#00e676,#00d4ff)' },
+  { id:uid(), name:'Marcus Webb',  initials:'MW', role:'Entrepreneur · SaaS',  topic:'Product Demo',         time:'Today, 2:00 PM',  dur:'30 min', status:'upcoming', grad:'linear-gradient(135deg,#ffb800,#ff4560)' },
+  { id:uid(), name:'Jennifer Park',initials:'JP', role:'Investor · VC Fund',   topic:'Due Diligence Review', time:'Tomorrow, 11:30 AM',dur:'90 min',status:'upcoming', grad:'linear-gradient(135deg,#b06cff,#00d4ff)' },
+];
+
+/* Render Lobby */
+function renderLobby() {
+  const list = document.getElementById('callList');
+  list.innerHTML = '';
+  calls.forEach(c => {
+    const row = document.createElement('div');
+    row.className = `call-row ${c.status}`;
+    row.innerHTML = `
+      <div class="cr-avatar" style="background:${c.grad}">${c.initials}</div>
+      <div class="cr-info">
+        <div class="cr-name">${c.name}</div>
+        <div class="cr-topic">${c.topic}</div>
+      </div>
+      <div class="cr-meta">
+        <span>🕐 ${c.time}</span>
+        <span>⏱ ${c.dur}</span>
+      </div>
+      ${c.status==='live'
+        ? `<div class="live-pill"><span class="live-dot"></span>LIVE</div>`
+        : `<div class="upcoming-pill">Upcoming</div>`}
+      <button class="join-btn ${c.status}" onclick="joinCall('${c.id}')">
+        ${c.status==='live' ? '🎥 Join' : 'Join Later'}
+      </button>
+    `;
+    list.appendChild(row);
+  });
+}
+
+/* State */
+let S = { mic:true, cam:true, screen:false, dur:0, timer:null, stream:null, currentName:'' };
+
+/* Join */
+async function joinCall(id) {
+  const c = calls.find(x => x.id === id);
+  if (!c) return;
+  await startCall(c.name, c.initials, c.grad, c.topic, c.role);
+}
+
+async function quickJoin() {
+  const name = document.getElementById('instantName').value.trim() || 'Quick Call';
+  await startCall(name, name.slice(0,2).toUpperCase(), 'linear-gradient(135deg,#b06cff,#00d4ff)', 'Instant Call', 'Guest');
+}
+
+async function startCall(name, initials, grad, topic, role) {
+  S.currentName = name;
+
+  // Update UI
+  document.getElementById('callNameH').textContent     = topic;
+  document.getElementById('remoteBigAvatar').textContent = initials;
+  document.getElementById('remoteBigAvatar').style.background = grad;
+  document.getElementById('remotePname').textContent   = name;
+  document.getElementById('remoteNametag').textContent = name;
+
+  // Show call screen, hide lobby
+  document.getElementById('lobby').style.display       = 'none';
+  document.getElementById('callScreen').classList.add('active');
+
+  // Reset controls
+  S.mic = true; S.cam = true; S.screen = false;
+  document.getElementById('micEmoji').textContent  = '🎤';
+  document.getElementById('camEmoji').textContent  = '📷';
+  document.getElementById('shareEmoji').textContent = '🖥️';
+  document.getElementById('btnMic').classList.remove('off');
+  document.getElementById('btnCam').classList.remove('off');
+  document.getElementById('camOffOverlay').classList.remove('show');
+
+  // Timer
+  S.dur = 0;
+  clearInterval(S.timer);
+  S.timer = setInterval(() => {
+    S.dur++;
+    document.getElementById('timerH').textContent = fmt(S.dur);
+  }, 1000);
+
+  // Camera
+  const localVideo = document.getElementById('localVideo');
+  const localPH    = document.getElementById('localPlaceholder');
+  try {
+    S.stream = await navigator.mediaDevices.getUserMedia({ video:true, audio:true });
+    localVideo.srcObject = S.stream;
+    localVideo.style.display = 'block';
+    localPH.style.display    = 'none';
+    toast('📷 Camera & mic connected', 's');
+  } catch {
+    localVideo.style.display = 'none';
+    localPH.style.display    = 'flex';
+    toast('📷 Camera unavailable — using avatar', 'i');
+  }
+
+  renderChat();
+  toast(`🎥 Joined: ${topic}`, 's');
+}
+
+/* End Call */
+function endCall() {
+  clearInterval(S.timer);
+  const dur = S.dur;
+
+  if (S.stream) { S.stream.getTracks().forEach(t => t.stop()); S.stream = null; }
+
+  document.getElementById('endSub').textContent = `${fmt(dur)} with ${S.currentName}`;
+  document.getElementById('endStats').innerHTML = `
+    <div><div class="end-stat-val">${fmt(dur)}</div><div class="end-stat-lbl">Duration</div></div>
+    <div><div class="end-stat-val">HD</div><div class="end-stat-lbl">Quality</div></div>
+    <div><div class="end-stat-val">2</div><div class="end-stat-lbl">People</div></div>
+  `;
+  document.getElementById('endOverlay').classList.add('show');
+}
+
+function backToLobby() {
+  document.getElementById('endOverlay').classList.remove('show');
+  document.getElementById('callScreen').classList.remove('active');
+  document.getElementById('lobby').style.display = '';
+  // close panels
+  document.getElementById('peoplePanel').classList.remove('open');
+  document.getElementById('chatPanel').classList.remove('open');
+  document.getElementById('ssOverlay').classList.remove('show');
+  toast('📋 Call saved to history', 'i');
+}
+
+/* Controls */
+function toggleMic() {
+  S.mic = !S.mic;
+  if (S.stream) S.stream.getAudioTracks().forEach(t => t.enabled = S.mic);
+  document.getElementById('micEmoji').textContent = S.mic ? '🎤' : '🔇';
+  document.getElementById('btnMic').classList.toggle('off', !S.mic);
+  document.getElementById('yourMicIcon').textContent = S.mic ? '🎤' : '🔇';
+  toast(S.mic ? '🎤 Mic on' : '🔇 Mic muted', S.mic ? 'i' : 'w');
+}
+
+function toggleCam() {
+  S.cam = !S.cam;
+  if (S.stream) S.stream.getVideoTracks().forEach(t => t.enabled = S.cam);
+  document.getElementById('camEmoji').textContent = S.cam ? '📷' : '🚫';
+  document.getElementById('btnCam').classList.toggle('off', !S.cam);
+  document.getElementById('camOffOverlay').classList.toggle('show', !S.cam);
+  toast(S.cam ? '📷 Camera on' : '📷 Camera off', S.cam ? 'i' : 'w');
+}
+
+async function toggleScreen() {
+  if (S.screen) { stopScreen(); return; }
+  try {
+    const ss = await navigator.mediaDevices.getDisplayMedia({ video:true });
+    S.screen = true;
+    document.getElementById('shareEmoji').textContent = '⏹️';
+    document.getElementById('btnShare').classList.add('off');
+    document.getElementById('ssOverlay').classList.add('show');
+    toast('🖥️ Screen sharing started', 's');
+    ss.getVideoTracks()[0].addEventListener('ended', stopScreen);
+  } catch { toast('🖥️ Screen share cancelled', 'i'); }
+}
+
+function stopScreen() {
+  S.screen = false;
+  document.getElementById('shareEmoji').textContent = '🖥️';
+  document.getElementById('btnShare').classList.remove('off');
+  document.getElementById('ssOverlay').classList.remove('show');
+  toast('🖥️ Screen sharing stopped', 'i');
+}
+
+function goFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
+  else document.exitFullscreen();
+}
+
+/* Panels */
+function togglePanel(p) {
+  const ids = { people:'peoplePanel', chat:'chatPanel' };
+  const el  = document.getElementById(ids[p]);
+  const isOpen = el.classList.contains('open');
+  // close all
+  document.querySelectorAll('.side-panel').forEach(x => x.classList.remove('open'));
+  if (!isOpen) el.classList.add('open');
+  if (p === 'chat' && !isOpen) document.getElementById('chatInp').focus();
+}
+function closePanel(p) {
+  const ids = { people:'peoplePanel', chat:'chatPanel' };
+  document.getElementById(ids[p]).classList.remove('open');
+}
+
+/* Chat */
+const msgs = [
+  { who:'Sarah Chen', txt:'Hi! Ready to start the pitch review?', mine:false },
+  { who:'You',        txt:"Yes! Let's go. Sharing my slides soon.", mine:true },
+];
+function renderChat() {
+  const el = document.getElementById('chatMsgs');
+  el.innerHTML = '';
+  msgs.forEach(m => {
+    const b = document.createElement('div');
+    b.className = `msg-bubble ${m.mine ? 'mine' : 'theirs'}`;
+    b.innerHTML = (!m.mine ? `<div class="msg-who">${m.who}</div>` : '') + m.txt;
+    el.appendChild(b);
+  });
+  el.scrollTop = el.scrollHeight;
+}
+function sendMsg() {
+  const inp = document.getElementById('chatInp');
+  const txt = inp.value.trim(); if (!txt) return;
+  msgs.push({ who:'You', txt, mine:true });
+  renderChat(); inp.value = '';
+  setTimeout(() => {
+    msgs.push({ who: S.currentName || 'Participant', txt:'👍 Got it!', mine:false });
+    renderChat();
+  }, 1400);
+}
+
+/* Draggable PiP */
+(function() {
+  const pip = document.getElementById('localPip');
+  let ox, oy, ix, iy;
+  pip.addEventListener('mousedown', e => {
+    const r = pip.getBoundingClientRect();
+    ix = e.clientX - r.left; iy = e.clientY - r.top;
+    pip.style.transition = 'none'; pip.style.cursor = 'grabbing';
+    function mv(e) {
+      pip.style.right = 'auto'; pip.style.top = 'auto';
+      pip.style.left = (e.clientX - ix) + 'px';
+      pip.style.top  = (e.clientY - iy) + 'px';
+    }
+    function up() {
+      pip.style.cursor = ''; pip.style.transition = '';
+      window.removeEventListener('mousemove', mv);
+      window.removeEventListener('mouseup', up);
+    }
+    window.addEventListener('mousemove', mv);
+    window.addEventListener('mouseup', up);
+  });
+})();
+
+/* Init */
+renderLobby();
+</script>
+</body>
+</html>
